@@ -2,7 +2,7 @@
 
 `docs/evidence/demo.mp4` (2:46, 1280x720, silent, about 8.9 MB). The same file is served by the landing page ("Watch the demo").
 
-It is a real, scripted run of the landing page and the Studio against the live Meta models, not a mock-up. Nothing on screen is edited except the speed-up of the long waits
+It is a real, scripted run of the landing page and the Studio against the live Meta models. Nothing on screen is edited except the speed-up of the long waits
 (marked "Sped up" in the captions) and the captions and title cards. Reproduce it with `scripts/record-demo.mjs` and `scripts/cut-demo.mjs`
 (needs the Studio on :4310 with the `local-demo` key and the Muse gateway on :8766; costs a few cents of API credit).
 

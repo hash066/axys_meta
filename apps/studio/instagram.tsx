@@ -2,7 +2,7 @@ import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import "./instagram.css";
 
 /**
- * Instagram preview: a phone mock of how the reel WOULD look on a profile. Nothing is posted and
+ * Instagram preview: a phone preview of how the reel WOULD look on a profile. Nothing is posted and
  * nothing is requested from Instagram: the handle is only text typed here (kept in localStorage).
  * The "Preview, not posted" tag is part of the component and cannot be hidden by props.
  */
@@ -364,7 +364,7 @@ export function InstagramPreview(props: InstagramPreviewProps) {
         </div>
       </div>
       <p className="muted ig-note" id={`${uid}-n`}>
-        A simulated mock. It is not posted, uses no Instagram login and makes no request to Instagram; the handle is
+        Preview only. It is not posted, uses no Instagram login and makes no request to Instagram; the handle is
         only text you type here. {props.note}
       </p>
 
@@ -582,7 +582,7 @@ export function InstagramPreview(props: InstagramPreviewProps) {
   );
 }
 
-/** ?sim=instagram: standalone page using a recorded landing reel so the mock can be inspected without a login. */
+/** ?sim=instagram: standalone page using a recorded landing reel so the preview can be inspected without a login. */
 export function InstagramSim() {
   const base = "/landing/reel-sneaker";
   const caption = useMemo(
