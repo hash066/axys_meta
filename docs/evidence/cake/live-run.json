@@ -1,9 +1,9 @@
 {
-  "startedAt": "2026-11-04T12:27:16.755Z",
+  "startedAt": "2026-11-04T19:27:48.366Z",
   "steps": [
     {
       "name": "capabilities",
-      "at": "2026-11-04T12:27:16.875Z",
+      "at": "2026-11-04T19:27:48.482Z",
       "muse": {
         "available": true,
         "keyConfigured": true,
@@ -19,20 +19,20 @@
     },
     {
       "name": "upload",
-      "at": "2026-11-04T12:27:16.938Z",
+      "at": "2026-11-04T19:27:48.660Z",
       "status": 201
     },
     {
       "name": "create",
-      "at": "2026-11-04T12:27:16.944Z",
+      "at": "2026-11-04T19:27:48.672Z",
       "status": 201,
       "state": "Draft"
     },
     {
       "name": "enrich: SAM 3.1 + Muse Image + Spark fidelity",
-      "at": "2026-11-04T12:28:25.678Z",
+      "at": "2026-11-04T19:28:59.582Z",
       "status": 200,
-      "seconds": 69,
+      "seconds": 71,
       "products": [
         {
           "found": true,
@@ -50,7 +50,7 @@
     },
     {
       "name": "generate: Muse Wonder plan + FFmpeg reel",
-      "at": "2026-11-04T12:28:54.201Z",
+      "at": "2026-11-04T19:29:39.112Z",
       "status": 202,
       "state": "NeedsReview",
       "aiPlanned": true,
@@ -62,29 +62,29 @@
     },
     {
       "name": "preflight (clean)",
-      "at": "2026-11-04T12:28:58.394Z",
+      "at": "2026-11-04T19:29:42.749Z",
       "ok": true,
       "issues": [],
       "model": "muse-wonder-1.0",
       "fuzzyRan": true
     },
     {
-      "name": "edit price INR 129 -> 149 (keepGenerated)",
-      "at": "2026-11-04T12:28:58.404Z",
+      "name": "edit price after generation (keepGenerated)",
+      "at": "2026-11-04T19:29:42.762Z",
       "status": 200
     },
     {
       "name": "preflight (stale price)",
-      "at": "2026-11-04T12:29:01.867Z",
+      "at": "2026-11-04T19:29:46.330Z",
       "ok": false,
       "issues": [
-        "block/site: expected INR 149.00 found INR 129.00",
-        "block/reel: expected INR 149.00 found INR 129.00",
-        "block/caption: expected INR 149.00 found INR 129.00"
+        "block/site: expected $55.00 found $45.00",
+        "block/reel: expected $55.00 found $45.00",
+        "block/caption: expected $55.00 found $45.00"
       ],
       "model": "muse-wonder-1.0"
     }
   ],
-  "finishedAt": "2026-11-04T12:29:01.901Z",
-  "campaignId": "593628f6-3400-43f0-afc1-100e6f607075"
+  "finishedAt": "2026-11-04T19:29:46.373Z",
+  "campaignId": "faae32ba-fe5f-40f0-a5a6-7ca3e715c0ed"
 }

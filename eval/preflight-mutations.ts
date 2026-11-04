@@ -208,6 +208,58 @@ const driftPlans: DriftPlan[] = [
       };
     },
   },
+  // ---- dollar-specific drift: the product's price is shown in another form that is NOT the confirmed money
+  ...(
+    [
+      [
+        "dollar_to_euro",
+        (p: Product) => `€${(p.priceMinor / 100).toFixed(2)}`,
+      ],
+      [
+        "dollar_to_pound",
+        (p: Product) => `£${(p.priceMinor / 100).toFixed(2)}`,
+      ],
+      [
+        "dollar_word_wrong_number",
+        (p: Product) => `${Math.floor(p.priceMinor / 100) + 7} dollars`,
+      ],
+      [
+        "dollar_cent_off_by_one",
+        (p: Product) => `$${((p.priceMinor + 1) / 100).toFixed(2)}`,
+      ],
+      [
+        "dollar_decimal_shift",
+        (p: Product) => `$${(p.priceMinor / 1000).toFixed(2)}`,
+      ],
+      [
+        "dollar_other_dollar",
+        (p: Product) => `A$${(p.priceMinor / 100).toFixed(2)}`,
+      ],
+      [
+        "dollar_to_rupee_word",
+        (p: Product) => `${Math.floor(p.priceMinor / 100)} rupees`,
+      ],
+    ] as const
+  ).map(
+    ([kind, wrongOf]): DriftPlan => ({
+      kind,
+      make: (s, where) => {
+        const p = pickProduct(s.c);
+        if (p.currency !== "USD") return { next: null }; // dollars only
+        const to = wrongOf(p);
+        return {
+          next: mapText(
+            s,
+            where,
+            replaceAll(price(p), to),
+            priceUnit(s, where, p),
+          ),
+          wrong: to,
+          shot: s.c.reel!.shots.findIndex((x) => x.productId === p.id),
+        };
+      },
+    }),
+  ),
   {
     kind: "offer",
     make: (s, where) => ({
@@ -381,6 +433,23 @@ export function priceVariants(p: Product): Record<string, string> {
     v.code_nodecimals = `${p.currency} ${amount(p, false)}`;
     v.symbol_slash_dash = `${SYM[p.currency]}${amount(p, false)}/-`;
   }
+  if (p.currency === "USD") {
+    v.code_and_symbol = `USD $${amount(p, true)}`;
+    v.code_glued_symbol = `USD$${amount(p, true)}`;
+    v.us_symbol = `US$${amount(p, true)}`;
+    v.code_after_lower = `${amount(p, true)} usd`;
+    if (WHOLE(p)) {
+      v.dollars_word = `${amount(p, false)} dollars`;
+      v.dollar_singular = `${amount(p, false)} dollar`;
+      v.us_dollars_word = `${amount(p, false)} US dollars`;
+      v.dollars_word_upper = `${amount(p, false)} DOLLARS`;
+    }
+    if (p.priceMinor >= 100000) {
+      v.symbol_grouped = `$${group(p.priceMinor / 100, false)}`;
+      if (WHOLE(p))
+        v.dollars_word_grouped = `${group(p.priceMinor / 100, false).replace(/\.00$/, "")} dollars`;
+    }
+  }
   if (p.currency === "INR") {
     if (WHOLE(p)) {
       v.rs_dot = `Rs. ${amount(p, false)}`;
@@ -498,8 +567,17 @@ function dateForms(iso: string) {
     ordinal: `${day}${suffix} ${long} ${y}`,
     iso_date: iso.slice(0, 10),
     zero_padded: `${String(day).padStart(2, "0")} ${long} ${y}`,
+    // The same instant as a US Eastern merchant would write it (UTC-5).
+    et_month_day_comma: (() => {
+      const et = new Date(d.getTime() - 5 * 3600000);
+      return `${MONTH_NAMES[et.getUTCMonth()]} ${et.getUTCDate()}, ${et.getUTCFullYear()}`;
+    })(),
   };
 }
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June", "July",
+  "August", "September", "October", "November", "December",
+];
 const contactVariants = (contact: string) => {
   const u = new URL(contact);
   const v: Record<string, string> = {

@@ -54,7 +54,7 @@ test("lab scenarios: 4-6, deterministic, each has exactly one wrong surface the 
       LAB_SURFACES.map((g) => g === v.wrongSurface),
     );
     assert.equal(s.facts.products.length, 2);
-    assert.match(s.facts.products[0].price, /^[A-Z]{3} \d+\.\d{2}$/);
+    assert.match(s.facts.products[0].price, /^\$\d+\.\d{2}$/);
     // Texts are the real builders' output.
     assert.ok(s.surfaces.site.lines.includes("MADE FOR YOUR MOMENTS"));
     assert.ok(s.surfaces.caption.lines[0] === s.facts.business);
@@ -121,12 +121,13 @@ test("POST preflight returns the real issues for right and wrong guesses", async
 
 test("specific faults are found with the expected values", () => {
   const find = (id: string) => labCheck(id, "site")!.issues;
-  assert.match(find("bakery-price")[0].found, /INR 840\.00/);
-  assert.equal(find("bakery-price")[0].expected, "INR 480.00");
+  assert.match(find("bakery-price")[0].found, /\$84\.00/);
+  assert.equal(find("bakery-price")[0].expected, "$48.00");
   assert.equal(labCheck("bakery-price", "reel")!.correct, true);
   assert.equal(labCheck("sneaker-contact", "site")!.correct, true);
   assert.equal(find("sneaker-contact")[0].found, "https://stridelane.example.com/orders");
-  assert.equal(labCheck("tote-currency", "caption")!.issues[0].found, "USD 36.00");
+  assert.equal(labCheck("tote-currency", "caption")!.issues[0].found, "€36.00");
+  assert.equal(labCheck("tote-currency", "caption")!.issues[0].expected, "$36.00");
   assert.match(find("salon-link")[0].found, /\?ref=reel-4821$/);
   assert.equal(labCheck("pottery-date", "reel")!.wrongSurface, "reel");
   assert.equal(labCheck("coffee-offer", "site")!.wrongSurface, "site");

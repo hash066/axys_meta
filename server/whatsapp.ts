@@ -10,6 +10,7 @@ import {
   verifyButtonReply,
 } from "./whatsapp-approval.ts";
 import type { Campaign } from "../packages/campaign/index.ts";
+import type { DraftPlan } from "../packages/meta/intake.ts";
 
 const MediaKind = z.enum(["image", "audio", "video", "document"]);
 export type WhatsAppMediaKind = z.infer<typeof MediaKind>;
@@ -41,6 +42,10 @@ export type WhatsAppDraft = {
   }>;
   mode?: "Website" | "Reels" | "Both";
   status: "NeedsConfirmation" | "Imported";
+  /** Pre-fill for the Brief (deterministic transcript extraction); the merchant still confirms every fact. */
+  plan?: DraftPlan;
+  /** True for drafts created by scripts/seed-whatsapp-draft.mts, never by the WhatsApp bridge. */
+  simulated?: boolean;
   campaignId?: string;
   importedAt?: string;
   updatedAt: string;

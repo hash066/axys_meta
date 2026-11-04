@@ -229,7 +229,7 @@ function PreflightCard() {
   return (
     <div className="card pf-card">
       <p className="lp-eb">PREFLIGHT · exact rules</p>
-      <p className="pf-title">Mug price after “make it 199”</p>
+      <p className="pf-title">Mug price after “forty nine dollars”</p>
       <div className="chips" aria-label="Result per surface">
         <span className="chip bad">
           <Icon name="x" size={12} /> Site
@@ -242,7 +242,7 @@ function PreflightCard() {
         </span>
       </div>
       <p className="pf-line">
-        Expected <b>INR 199.00</b>, found <s>INR 129.00</s> on all three. Approval is blocked.
+        Expected <b>$49.00</b>, found <s>$39.00</s> on all three. Approval is blocked.
       </p>
       <Tag kind="recorded live run" />
     </div>
@@ -257,7 +257,7 @@ function RedPenCard() {
       <div className="lp-rp-body">
         <span className="rp-name">ceramic mug</span>
         <span className="rp-price">
-          INR 129.00
+          $39.00
           <svg viewBox="0 0 150 46" aria-hidden="true" className="rp-ring">
             <ellipse cx="75" cy="23" rx="70" ry="19" pathLength="1" />
           </svg>
@@ -265,7 +265,7 @@ function RedPenCard() {
             <path d="M2 4 Q30 1 60 4 T118 4" pathLength="1" />
           </svg>
         </span>
-        <span className="lp-rp-note">now INR 199.00 — regenerate</span>
+        <span className="lp-rp-note">now $49.00 — regenerate</span>
       </div>
       <Tag kind="recorded live run" />
     </div>
@@ -432,7 +432,7 @@ function Problem() {
       n: 0,
       d: "/1,111",
       title: "False alarms on benign variants",
-      body: "Rs, ₹, grouping, case, dashes, date formats, :443. Also 0/24 on untouched controls.",
+      body: "Currency symbols and codes, number grouping, case, dashes, date formats, :443. Also 0/24 on untouched controls.",
       tag: "measured offline" as const,
       tone: "green",
       icon: "check",
@@ -486,7 +486,7 @@ function Problem() {
 
 /* ---------------------------------------------------------------- replay */
 
-const COMMAND = "make the mug one ninety nine rupees";
+const COMMAND = "make the mug forty nine dollars";
 const REPLAY_STEPS = ["Say it", "Diff", "Red Pen", "Fix"];
 const SURFACES = [
   { id: "site", name: "Website", line: "ceramic mug", icon: "grid" },
@@ -530,9 +530,9 @@ function Replay() {
   }, [reduced]);
   const say = [
     "Replay ready.",
-    "You said: make the mug one ninety nine rupees.",
-    "Muse Wonder parsed it: mug price from INR 149.00 to INR 199.00. Nothing applied yet.",
-    "Applied. Preflight blocks the site, the reel and the caption: expected INR 199.00, found INR 129.00.",
+    "You said: make the mug forty nine dollars.",
+    "Muse Wonder parsed it: mug price from $39.00 to $49.00. Nothing applied yet.",
+    "Applied. Preflight blocks the site, the reel and the caption: expected $49.00, found $39.00.",
     "Fix with Axys is regenerating all three from the confirmed facts.",
     "Preflight is clear. Every mark is green.",
   ][step + 1];
@@ -589,12 +589,12 @@ function Replay() {
               <span className="who">Muse Wonder · parsed, not applied</span>
               <div className="diff">
                 <span>Mug price</span>
-                <s>INR 149.00</s>
+                <s>$39.00</s>
                 <Icon name="arrow" size={14} />
-                <b>INR 199.00</b>
+                <b>$49.00</b>
               </div>
               <p className="quote">
-                heard as <em>“one ninety nine rupees”</em>
+                heard as <em>“forty nine dollars”</em>
                 {step >= 2 ? <span className="applied"><Icon name="check" size={12} /> Applied</span> : null}
               </p>
             </div>
@@ -606,7 +606,7 @@ function Replay() {
                 {["site", "reel", "caption"].map((s) => (
                   <li key={s}>
                     <span className={`lp-sev${fixed ? " ok" : ""}`}>{fixed ? "clear" : "block"}</span>
-                    {s}: expected INR 199.00, found {fixed ? "INR 199.00" : "INR 129.00"}
+                    {s}: expected $49.00, found {fixed ? "$49.00" : "$39.00"}
                   </li>
                 ))}
               </ul>
@@ -625,7 +625,7 @@ function Replay() {
           ) : null}
         </div>
         <div className="surfaces">
-          <p className="lp-eb">SURFACES · generated when the price was INR 129.00</p>
+          <p className="lp-eb">SURFACES · generated when the price was $39.00</p>
           {SURFACES.map((s) => (
             <div key={s.id} className={`surf${marked ? " marked" : ""}${fixed ? " fixed" : ""}`}>
               <span className="surf-name">
@@ -634,7 +634,7 @@ function Replay() {
               <span className="surf-line">
                 {s.line}
                 <span className="price">
-                  {fixed ? "INR 199.00" : "INR 129.00"}
+                  {fixed ? "$49.00" : "$39.00"}
                   {marked ? (
                     <svg viewBox="0 0 120 34" aria-hidden="true" className="ring">
                       <ellipse cx="60" cy="17" rx="56" ry="13" pathLength="1" />
@@ -643,7 +643,7 @@ function Replay() {
                 </span>
                 {fixed ? <Icon name="check" size={15} className="tick" /> : null}
               </span>
-              {marked ? <span className="hand">now INR 199.00 — regenerate</span> : null}
+              {marked ? <span className="hand">now $49.00 — regenerate</span> : null}
             </div>
           ))}
           <p className="surf-foot">
@@ -659,9 +659,11 @@ function Replay() {
         {say}
       </div>
       <p className="replay-note">
-        Assembled from two recorded live runs on 4 Nov 2026 (the Say it parse and the Red Pen fix;
-        the surfaces show the older INR 129.00 because the price had already been edited once).
-        Timings are compressed for reading. Source: docs/META_NEW.md.
+        The command, the parsed diff, the quote and the preflight issues come from one live Say it run on the
+        mug (4 Nov 2026, docs/evidence/say-it-run.json). The surfaces show $39.00 because the price had
+        already been edited once. The Fix step is staged from the recorded Red Pen fix. Timings are compressed
+        for reading.
+        Source: docs/META_NEW.md.
       </p>
     </Reveal>
   );
@@ -898,8 +900,8 @@ const PIPE = [
   {
     id: "cutout", name: "Cut out", icon: "scissors", model: "SAM 3.1",
     title: "Cut the product out, with its parts",
-    body: "SAM cuts out the named product. Spark names the visible parts, and the union mask keeps them. Coverage: mug 25.1% (27.2% with the handle), sneaker 30.5%, cake 19.3% (28.0% with raspberries).",
-    nums: [["19→28%", "cake coverage"], ["30.5%", "sneaker coverage"]], tag: "recorded live run",
+    body: "SAM cuts out the named product. Spark names the visible parts, and the union mask keeps them. Coverage: mug 27.2% (with the handle), sneaker 30.7%, cake 19.3% (28.0% with raspberries).",
+    nums: [["19→28%", "cake coverage"], ["30.7%", "sneaker coverage"]], tag: "recorded live run",
     note: "SAM may miss unusual or thin objects, and only one product category was tested at scale.",
   },
   {
@@ -980,8 +982,8 @@ function PipeVisual({ id }: { id: string }) {
   if (id === "brief")
     return (
       <div className="pipe-chat">
-        <p className="b you">“make the mug one ninety nine rupees”</p>
-        <p className="b ax">Mug price INR 149.00 → INR 199.00. Apply?</p>
+        <p className="b you">“make the mug forty nine dollars”</p>
+        <p className="b ax">Mug price $39.00 → $49.00. Apply?</p>
         <p className="b you">“set the mug price to 0”</p>
         <p className="b ax warn">That would give the mug away. Did you mean a different price?</p>
       </div>

@@ -1,436 +1,317 @@
 {
-  "generatedAt": "2026-11-04T05:19:18.977Z",
+  "generatedAt": "2026-11-04T19:19:32.194Z",
   "node": "v22.19.0",
-  "bases": 12,
+  "bases": 13,
   "mode": {
-    "live": true
+    "live": false
   },
   "offline": {
     "totals": {
-      "cases": 1657,
+      "cases": 1778,
       "byFamily": {
-        "control": 24,
-        "drift": 372,
-        "stale": 114,
-        "benign": 1111,
-        "debatable": 24,
-        "voice": 12
+        "control": 26,
+        "drift": 452,
+        "stale": 124,
+        "benign": 1137,
+        "debatable": 26,
+        "voice": 13
       }
     },
     "detection": {
       "drift_all_surfaces": {
-        "k": 312,
-        "n": 312,
+        "k": 387,
+        "n": 387,
         "rate": 1,
         "ci95": [
-          0.9878,
+          0.9902,
           1
         ]
       },
       "drift_by_surface": {
         "caption": {
-          "k": 120,
-          "n": 120,
+          "k": 165,
+          "n": 165,
           "rate": 1,
           "ci95": [
-            0.969,
+            0.9772,
             1
           ]
         },
         "reel": {
-          "k": 72,
-          "n": 72,
+          "k": 113,
+          "n": 113,
           "rate": 1,
           "ci95": [
-            0.9493,
+            0.9671,
             1
           ]
         },
         "site": {
-          "k": 120,
-          "n": 120,
+          "k": 109,
+          "n": 109,
           "rate": 1,
           "ci95": [
-            0.969,
+            0.966,
             1
           ]
         }
       },
       "drift_by_kind": {
         "business": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "collection": {
-          "k": 36,
-          "n": 36,
+          "k": 39,
+          "n": 39,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.9103,
             1
           ]
         },
         "contact": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "contact_extended": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "currency": {
-          "k": 36,
-          "n": 36,
+          "k": 32,
+          "n": 32,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.8928,
+            1
+          ]
+        },
+        "dollar_cent_off_by_one": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_decimal_shift": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_other_dollar": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_to_euro": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_to_pound": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_to_rupee_word": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_word_wrong_number": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
             1
           ]
         },
         "offer": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "price_down": {
-          "k": 36,
-          "n": 36,
+          "k": 32,
+          "n": 32,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.8928,
             1
           ]
         },
         "price_up": {
-          "k": 36,
-          "n": 36,
+          "k": 32,
+          "n": 32,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.8928,
             1
           ]
         },
         "product_name": {
-          "k": 36,
-          "n": 36,
+          "k": 39,
+          "n": 39,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.9103,
             1
           ]
         },
         "valid_until": {
-          "k": 36,
-          "n": 36,
+          "k": 39,
+          "n": 39,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.9103,
             1
           ]
         }
       },
       "drift_by_kind_surface": {
         "business @ caption": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "business @ site": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "collection @ caption": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "collection @ reel": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "collection @ site": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "contact @ caption": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "contact @ site": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "contact_extended @ caption": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "contact_extended @ site": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "currency @ caption": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "currency @ reel": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "currency @ site": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "offer @ caption": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "offer @ site": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "price_down @ caption": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "price_down @ reel": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "price_down @ site": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "price_up @ caption": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "price_up @ reel": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "price_up @ site": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "product_name @ caption": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "product_name @ reel": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "product_name @ site": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "valid_until @ caption": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "valid_until @ reel": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "valid_until @ site": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        }
-      },
-      "stale_campaign_level": {
-        "k": 114,
-        "n": 114,
-        "rate": 1,
-        "ci95": [
-          0.9674,
-          1
-        ]
-      },
-      "stale_by_kind": {
-        "business": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "collection": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "contact": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "currency": {
-          "k": 12,
-          "n": 12,
-          "rate": 1,
-          "ci95": [
-            0.7575,
-            1
-          ]
-        },
-        "message": {
           "k": 6,
           "n": 6,
           "rate": 1,
@@ -439,107 +320,415 @@
             1
           ]
         },
-        "offer": {
-          "k": 12,
-          "n": 12,
+        "dollar_cent_off_by_one @ caption": {
+          "k": 5,
+          "n": 5,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.5655,
+            1
+          ]
+        },
+        "dollar_cent_off_by_one @ reel": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_decimal_shift @ caption": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_decimal_shift @ reel": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_other_dollar @ caption": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_other_dollar @ reel": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_to_euro @ caption": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_to_euro @ reel": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_to_pound @ caption": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_to_pound @ reel": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_to_rupee_word @ caption": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_to_rupee_word @ reel": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_word_wrong_number @ caption": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "dollar_word_wrong_number @ reel": {
+          "k": 5,
+          "n": 5,
+          "rate": 1,
+          "ci95": [
+            0.5655,
+            1
+          ]
+        },
+        "offer @ caption": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "offer @ site": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "price_down @ caption": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "price_down @ reel": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "price_down @ site": {
+          "k": 6,
+          "n": 6,
+          "rate": 1,
+          "ci95": [
+            0.6097,
+            1
+          ]
+        },
+        "price_up @ caption": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "price_up @ reel": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "price_up @ site": {
+          "k": 6,
+          "n": 6,
+          "rate": 1,
+          "ci95": [
+            0.6097,
+            1
+          ]
+        },
+        "product_name @ caption": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "product_name @ reel": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "product_name @ site": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "valid_until @ caption": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "valid_until @ reel": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "valid_until @ site": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        }
+      },
+      "stale_campaign_level": {
+        "k": 124,
+        "n": 124,
+        "rate": 1,
+        "ci95": [
+          0.97,
+          1
+        ]
+      },
+      "stale_by_kind": {
+        "business": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "collection": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "contact": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "currency": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
+            1
+          ]
+        },
+        "message": {
+          "k": 7,
+          "n": 7,
+          "rate": 1,
+          "ci95": [
+            0.6457,
+            1
+          ]
+        },
+        "offer": {
+          "k": 13,
+          "n": 13,
+          "rate": 1,
+          "ci95": [
+            0.7719,
             1
           ]
         },
         "price_down": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "price_up": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "product_name": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "valid_until": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         }
       },
       "voice_wrong_price": {
-        "k": 12,
-        "n": 12,
+        "k": 13,
+        "n": 13,
         "rate": 1,
         "ci95": [
-          0.7575,
+          0.7719,
           1
         ]
       },
       "extension_probes_by_kind": {
         "business_extended @ caption": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "business_extended @ site": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "offer_extended @ caption": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "offer_extended @ site": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         }
       },
       "partial_probes_by_kind": {
         "collection_one_of_two @ site": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         }
       }
@@ -547,16 +736,16 @@
     "falseAlarms": {
       "controls": {
         "k": 0,
-        "n": 24,
+        "n": 26,
         "rate": 0,
         "ci95": [
           0,
-          0.138
+          0.1287
         ]
       },
       "benign_all": {
         "k": 0,
-        "n": 1111,
+        "n": 1137,
         "rate": 0,
         "ci95": [
           0,
@@ -566,106 +755,115 @@
       "benign_by_surface": {
         "site": {
           "k": 0,
-          "n": 335,
+          "n": 292,
           "rate": 0,
           "ci95": [
             0,
-            0.0113
+            0.013
           ]
         },
         "reel": {
           "k": 0,
-          "n": 251,
+          "n": 268,
           "rate": 0,
           "ci95": [
             0,
-            0.0151
+            0.0141
           ]
         },
         "caption": {
           "k": 0,
-          "n": 380,
+          "n": 418,
           "rate": 0,
           "ci95": [
             0,
-            0.01
+            0.0091
           ]
         },
         "voice": {
           "k": 0,
-          "n": 145,
+          "n": 159,
           "rate": 0,
           "ci95": [
             0,
-            0.0258
+            0.0236
           ]
         }
       },
       "benign_by_kind": {
         "trailing_spaces": {
           "k": 0,
-          "n": 36,
+          "n": 39,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.0897
           ]
         },
         "leading_spaces": {
           "k": 0,
-          "n": 36,
+          "n": 39,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.0897
           ]
         },
         "double_spaces": {
           "k": 0,
-          "n": 36,
+          "n": 39,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.0897
           ]
         },
         "tabs": {
           "k": 0,
-          "n": 36,
+          "n": 39,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.0897
           ]
         },
         "nbsp": {
           "k": 0,
-          "n": 36,
+          "n": 39,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.0897
           ]
         },
         "uppercase": {
           "k": 0,
-          "n": 36,
+          "n": 39,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.0897
           ]
         },
         "lowercase": {
           "k": 0,
-          "n": 36,
+          "n": 39,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.0897
           ]
         },
         "dash_style": {
+          "k": 0,
+          "n": 19,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1682
+          ]
+        },
+        "price_symbol": {
           "k": 0,
           "n": 18,
           "rate": 0,
@@ -674,188 +872,251 @@
             0.1759
           ]
         },
-        "price_symbol": {
-          "k": 0,
-          "n": 36,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.0964
-          ]
-        },
         "price_code_nospace": {
           "k": 0,
-          "n": 36,
+          "n": 32,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1072
           ]
         },
         "price_code_lower": {
           "k": 0,
-          "n": 36,
+          "n": 32,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1072
           ]
         },
         "price_code_after": {
           "k": 0,
-          "n": 36,
+          "n": 32,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1072
           ]
         },
         "price_symbol_space": {
           "k": 0,
-          "n": 36,
+          "n": 32,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1072
           ]
         },
         "price_one_decimal": {
           "k": 0,
-          "n": 36,
+          "n": 30,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1135
           ]
         },
         "price_symbol_nodecimals": {
           "k": 0,
-          "n": 36,
+          "n": 26,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1287
           ]
         },
         "price_code_nodecimals": {
           "k": 0,
-          "n": 36,
+          "n": 26,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1287
           ]
         },
         "price_symbol_slash_dash": {
           "k": 0,
-          "n": 36,
+          "n": 26,
           "rate": 0,
           "ci95": [
             0,
-            0.0964
+            0.1287
           ]
         },
         "price_rs_dot": {
           "k": 0,
-          "n": 27,
+          "n": 18,
           "rate": 0,
           "ci95": [
             0,
-            0.1246
+            0.1759
           ]
         },
         "price_rs_nodot": {
           "k": 0,
-          "n": 27,
+          "n": 18,
           "rate": 0,
           "ci95": [
             0,
-            0.1246
+            0.1759
           ]
         },
         "price_rs_glued": {
           "k": 0,
-          "n": 27,
+          "n": 18,
           "rate": 0,
           "ci95": [
             0,
-            0.1246
+            0.1759
           ]
         },
         "price_rupees_word": {
           "k": 0,
-          "n": 27,
+          "n": 18,
           "rate": 0,
           "ci95": [
             0,
-            0.1246
+            0.1759
           ]
         },
         "crlf": {
           "k": 0,
-          "n": 24,
+          "n": 26,
           "rate": 0,
           "ci95": [
             0,
-            0.138
+            0.1287
           ]
         },
         "dash_en_to_em": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "bullet_prefix": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "emoji_prefix": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "headline_rewrite": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "contact_host_uppercase": {
           "k": 0,
-          "n": 24,
+          "n": 26,
           "rate": 0,
           "ci95": [
             0,
-            0.138
+            0.1287
           ]
         },
         "contact_default_port": {
           "k": 0,
-          "n": 24,
+          "n": 26,
           "rate": 0,
           "ci95": [
             0,
-            0.138
+            0.1287
           ]
         },
         "contact_scheme_uppercase": {
           "k": 0,
+          "n": 26,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1287
+          ]
+        },
+        "expiry_day_month_long": {
+          "k": 0,
+          "n": 14,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2153
+          ]
+        },
+        "expiry_day_month_short": {
+          "k": 0,
+          "n": 14,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2153
+          ]
+        },
+        "expiry_month_day_comma": {
+          "k": 0,
+          "n": 14,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2153
+          ]
+        },
+        "expiry_ordinal": {
+          "k": 0,
+          "n": 14,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2153
+          ]
+        },
+        "expiry_iso_date": {
+          "k": 0,
+          "n": 14,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2153
+          ]
+        },
+        "expiry_zero_padded": {
+          "k": 0,
+          "n": 14,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2153
+          ]
+        },
+        "expiry_et_month_day_comma": {
+          "k": 0,
+          "n": 14,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2153
+          ]
+        },
+        "contact_path_trailing_slash": {
+          "k": 0,
           "n": 24,
           "rate": 0,
           "ci95": [
@@ -863,112 +1124,49 @@
             0.138
           ]
         },
-        "expiry_day_month_long": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
-          ]
-        },
-        "expiry_day_month_short": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
-          ]
-        },
-        "expiry_month_day_comma": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
-          ]
-        },
-        "expiry_ordinal": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
-          ]
-        },
-        "expiry_iso_date": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
-          ]
-        },
-        "expiry_zero_padded": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
-          ]
-        },
-        "contact_path_trailing_slash": {
-          "k": 0,
-          "n": 22,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.1487
-          ]
-        },
         "voice_symbol": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "voice_code_nospace": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "voice_code_lower": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "voice_code_after": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "voice_symbol_space": {
           "k": 0,
-          "n": 12,
+          "n": 13,
           "rate": 0,
           "ci95": [
             0,
-            0.2425
+            0.2281
           ]
         },
         "voice_one_decimal": {
@@ -982,83 +1180,83 @@
         },
         "voice_symbol_nodecimals": {
           "k": 0,
-          "n": 11,
+          "n": 9,
           "rate": 0,
           "ci95": [
             0,
-            0.2588
+            0.2991
           ]
         },
         "voice_code_nodecimals": {
           "k": 0,
-          "n": 11,
+          "n": 9,
           "rate": 0,
           "ci95": [
             0,
-            0.2588
+            0.2991
           ]
         },
         "voice_symbol_slash_dash": {
           "k": 0,
+          "n": 9,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2991
+          ]
+        },
+        "voice_rs_dot": {
+          "k": 0,
+          "n": 6,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.3903
+          ]
+        },
+        "voice_rs_nodot": {
+          "k": 0,
+          "n": 6,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.3903
+          ]
+        },
+        "voice_rs_glued": {
+          "k": 0,
+          "n": 6,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.3903
+          ]
+        },
+        "voice_rupees_word": {
+          "k": 0,
+          "n": 6,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.3903
+          ]
+        },
+        "price_indian_grouping": {
+          "k": 0,
+          "n": 9,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2991
+          ]
+        },
+        "price_western_grouping": {
+          "k": 0,
           "n": 11,
           "rate": 0,
           "ci95": [
             0,
             0.2588
-          ]
-        },
-        "voice_rs_dot": {
-          "k": 0,
-          "n": 9,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2991
-          ]
-        },
-        "voice_rs_nodot": {
-          "k": 0,
-          "n": 9,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2991
-          ]
-        },
-        "voice_rs_glued": {
-          "k": 0,
-          "n": 9,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2991
-          ]
-        },
-        "voice_rupees_word": {
-          "k": 0,
-          "n": 9,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2991
-          ]
-        },
-        "price_indian_grouping": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
-          ]
-        },
-        "price_western_grouping": {
-          "k": 0,
-          "n": 12,
-          "rate": 0,
-          "ci95": [
-            0,
-            0.2425
           ]
         },
         "voice_indian_grouping": {
@@ -1072,11 +1270,119 @@
         },
         "voice_western_grouping": {
           "k": 0,
-          "n": 2,
+          "n": 3,
           "rate": 0,
           "ci95": [
             0,
-            0.6576
+            0.5615
+          ]
+        },
+        "price_code_and_symbol": {
+          "k": 0,
+          "n": 10,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2775
+          ]
+        },
+        "price_code_glued_symbol": {
+          "k": 0,
+          "n": 10,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2775
+          ]
+        },
+        "price_us_symbol": {
+          "k": 0,
+          "n": 10,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2775
+          ]
+        },
+        "price_code_after_lower": {
+          "k": 0,
+          "n": 10,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2775
+          ]
+        },
+        "voice_code_and_symbol": {
+          "k": 0,
+          "n": 5,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4345
+          ]
+        },
+        "voice_code_glued_symbol": {
+          "k": 0,
+          "n": 5,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4345
+          ]
+        },
+        "voice_us_symbol": {
+          "k": 0,
+          "n": 5,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4345
+          ]
+        },
+        "voice_code_after_lower": {
+          "k": 0,
+          "n": 5,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4345
+          ]
+        },
+        "price_dollars_word": {
+          "k": 0,
+          "n": 4,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4899
+          ]
+        },
+        "price_dollar_singular": {
+          "k": 0,
+          "n": 4,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4899
+          ]
+        },
+        "price_us_dollars_word": {
+          "k": 0,
+          "n": 4,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4899
+          ]
+        },
+        "price_dollars_word_upper": {
+          "k": 0,
+          "n": 4,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.4899
           ]
         },
         "contact_root_slash_toggle": {
@@ -1087,24 +1393,96 @@
             0,
             0.6576
           ]
+        },
+        "price_symbol_grouped": {
+          "k": 0,
+          "n": 2,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.6576
+          ]
+        },
+        "price_dollars_word_grouped": {
+          "k": 0,
+          "n": 2,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.6576
+          ]
+        },
+        "voice_dollars_word": {
+          "k": 0,
+          "n": 1,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.7935
+          ]
+        },
+        "voice_dollar_singular": {
+          "k": 0,
+          "n": 1,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.7935
+          ]
+        },
+        "voice_us_dollars_word": {
+          "k": 0,
+          "n": 1,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.7935
+          ]
+        },
+        "voice_dollars_word_upper": {
+          "k": 0,
+          "n": 1,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.7935
+          ]
+        },
+        "voice_symbol_grouped": {
+          "k": 0,
+          "n": 1,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.7935
+          ]
+        },
+        "voice_dollars_word_grouped": {
+          "k": 0,
+          "n": 1,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.7935
+          ]
         }
       },
       "debatable_by_kind": {
         "price_without_currency": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         },
         "contact_tracking_param": {
-          "k": 12,
-          "n": 12,
+          "k": 13,
+          "n": 13,
           "rate": 1,
           "ci95": [
-            0.7575,
+            0.7719,
             1
           ]
         }
@@ -1112,112 +1490,175 @@
     },
     "locate": {
       "exact_text_among_detected_drift": {
-        "k": 312,
-        "n": 312,
+        "k": 387,
+        "n": 387,
         "rate": 1,
         "ci95": [
-          0.9878,
+          0.9902,
           1
         ]
       },
       "by_kind": {
         "business": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "collection": {
-          "k": 36,
-          "n": 36,
+          "k": 39,
+          "n": 39,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.9103,
             1
           ]
         },
         "contact": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "contact_extended": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "currency": {
-          "k": 36,
-          "n": 36,
+          "k": 32,
+          "n": 32,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.8928,
+            1
+          ]
+        },
+        "dollar_cent_off_by_one": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_decimal_shift": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_other_dollar": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_to_euro": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_to_pound": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_to_rupee_word": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
+            1
+          ]
+        },
+        "dollar_word_wrong_number": {
+          "k": 10,
+          "n": 10,
+          "rate": 1,
+          "ci95": [
+            0.7225,
             1
           ]
         },
         "offer": {
-          "k": 24,
-          "n": 24,
+          "k": 26,
+          "n": 26,
           "rate": 1,
           "ci95": [
-            0.862,
+            0.8713,
             1
           ]
         },
         "price_down": {
-          "k": 36,
-          "n": 36,
+          "k": 32,
+          "n": 32,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.8928,
             1
           ]
         },
         "price_up": {
-          "k": 36,
-          "n": 36,
+          "k": 32,
+          "n": 32,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.8928,
             1
           ]
         },
         "product_name": {
-          "k": 36,
-          "n": 36,
+          "k": 39,
+          "n": 39,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.9103,
             1
           ]
         },
         "valid_until": {
-          "k": 36,
-          "n": 36,
+          "k": 39,
+          "n": 39,
           "rate": 1,
           "ci95": [
-            0.9036,
+            0.9103,
             1
           ]
         }
       },
       "reel_shot_correct_among_boxed": {
-        "k": 72,
-        "n": 72,
+        "k": 113,
+        "n": 113,
         "rate": 1,
         "ci95": [
-          0.9493,
+          0.9671,
           1
         ]
       },
@@ -1232,189 +1673,11 @@
       "invariantViolations": []
     }
   },
-  "live": {
-    "model": "muse-wonder-1.0",
-    "calls": 10,
-    "errors": 0,
-    "claim_any_caption_warning": {
-      "k": 7,
-      "n": 7,
-      "rate": 1,
-      "ci95": [
-        0.6457,
-        1
-      ]
-    },
-    "claim_warning_names_the_claim": {
-      "k": 7,
-      "n": 7,
-      "rate": 1,
-      "ci95": [
-        0.6457,
-        1
-      ]
-    },
-    "claim_locate_exact": {
-      "k": 7,
-      "n": 7,
-      "rate": 1,
-      "ci95": [
-        0.6457,
-        1
-      ]
-    },
-    "control_any_warning": {
-      "k": 0,
-      "n": 3,
-      "rate": 0,
-      "ci95": [
-        0,
-        0.5615
-      ]
-    },
-    "note": "Wonder findings are warnings only (never block). Control campaigns here are the unmodified deterministic captions.",
-    "results": [
-      {
-        "id": "live/claim/organic",
-        "kind": "claim",
-        "claim": "organic",
-        "base": "bakery",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": [
-          {
-            "surface": "caption",
-            "text": "Quality claim that products are made with 100% organic ingredients is not supported by confirmed facts",
-            "found": "Made with 100% organic ingredients.",
-            "locateText": "Made with 100% organic ingredients."
-          }
-        ]
-      },
-      {
-        "id": "live/claim/free_delivery",
-        "kind": "claim",
-        "claim": "free_delivery",
-        "base": "jewellery",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": [
-          {
-            "surface": "caption",
-            "text": "Delivery promise not in confirmed facts",
-            "found": "Free delivery across India.",
-            "locateText": "Free delivery across India."
-          }
-        ]
-      },
-      {
-        "id": "live/claim/half_off",
-        "kind": "claim",
-        "claim": "half_off",
-        "base": "sweets",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": [
-          {
-            "surface": "caption",
-            "text": "invented discount and urgency not in confirmed facts",
-            "found": "50% off today only!",
-            "locateText": "50% off today only!"
-          }
-        ]
-      },
-      {
-        "id": "live/claim/award",
-        "kind": "claim",
-        "claim": "award",
-        "base": "plants",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": [
-          {
-            "surface": "caption",
-            "text": "Award claim not supported by confirmed facts",
-            "found": "Award-winning craftsmanship.",
-            "locateText": "Award-winning craftsmanship."
-          }
-        ]
-      },
-      {
-        "id": "live/claim/health",
-        "kind": "claim",
-        "claim": "health",
-        "base": "ink",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": [
-          {
-            "surface": "caption",
-            "text": "Unsupported health claim that the product is clinically proven to boost immunity",
-            "found": "Clinically proven to boost immunity.",
-            "locateText": "Clinically proven to boost immunity."
-          }
-        ]
-      },
-      {
-        "id": "live/claim/best",
-        "kind": "claim",
-        "claim": "best",
-        "base": "round-price",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": [
-          {
-            "surface": "caption",
-            "text": "Unsupported award/quality claim: voted best in city is not in confirmed facts",
-            "found": "Voted the best in the city.",
-            "locateText": "Voted the best in the city."
-          }
-        ]
-      },
-      {
-        "id": "live/claim/scarcity",
-        "kind": "claim",
-        "claim": "scarcity",
-        "base": "usd-coffee",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": [
-          {
-            "surface": "caption",
-            "text": "Unsupported stock/scarcity claim",
-            "found": "Only 3 left in stock.",
-            "locateText": "Only 3 left in stock."
-          }
-        ]
-      },
-      {
-        "id": "live/control/bakery",
-        "kind": "control",
-        "base": "bakery",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": []
-      },
-      {
-        "id": "live/control/jewellery",
-        "kind": "control",
-        "base": "jewellery",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": []
-      },
-      {
-        "id": "live/control/plants",
-        "kind": "control",
-        "base": "plants",
-        "ok": true,
-        "model": "muse-wonder-1.0",
-        "warnings": []
-      }
-    ]
-  },
+  "live": null,
   "notes": [
     "Offline numbers cover deterministic exact-match rules only; fuzzy (Wonder) detection is evaluated only in the live section.",
     "Cases share base campaigns, so Wilson intervals assume independence and are optimistic.",
-    "Surface text variants for the site are applied to the rendered site text; reel and caption variants edit the stored reel spec."
+    "Surface text variants for the site are applied to the rendered site text; reel and caption variants edit the stored reel spec.",
+    "Fuzzy detection was not evaluated (run with --live)."
   ]
 }

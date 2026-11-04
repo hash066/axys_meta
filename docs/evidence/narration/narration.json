@@ -1,0 +1,82 @@
+[
+  {
+    "id": "n1",
+    "text": "This is Axys. A shop owner sends a photo and a voice note on WhatsApp, and gets a website, a reel and a caption, with every price checked by code.",
+    "file": "docs/evidence/narration/n1.mp3",
+    "durationSec": 9.75,
+    "credits": 0,
+    "cached": true
+  },
+  {
+    "id": "n2",
+    "text": "Models can state the wrong thing with confidence. So we measured our checks, and you can try the real ones yourself.",
+    "file": "docs/evidence/narration/n2.mp3",
+    "durationSec": 6.41,
+    "credits": 58,
+    "cached": false
+  },
+  {
+    "id": "n3",
+    "text": "Here is the WhatsApp flow, simulated for this demo.",
+    "file": "docs/evidence/narration/n3.mp3",
+    "durationSec": 2.88,
+    "credits": 26,
+    "cached": false
+  },
+  {
+    "id": "n4",
+    "text": "Muse Voice transcribes the note. The assistant pulls out the facts and asks the owner to confirm them. Then the draft continues in the Studio.",
+    "file": "docs/evidence/narration/n4.mp3",
+    "durationSec": 7.94,
+    "credits": 71,
+    "cached": false
+  },
+  {
+    "id": "n5",
+    "text": "In the Studio the facts arrive pre filled. Muse Spark identifies the product, SAM cuts it out, and Muse Image builds the backdrops.",
+    "file": "docs/evidence/narration/n5.mp3",
+    "durationSec": 8.87,
+    "credits": 66,
+    "cached": false
+  },
+  {
+    "id": "n6",
+    "text": "Muse Wonder plans the film, and writes the narration you are about to hear.",
+    "file": "docs/evidence/narration/n6.mp3",
+    "durationSec": 4.41,
+    "credits": 38,
+    "cached": false
+  },
+  {
+    "id": "n7",
+    "text": "Now change the price just by saying it. Code checks every number against your words, Red Pen marks every stale surface, and one press fixes them all.",
+    "file": "docs/evidence/narration/n7.mp3",
+    "durationSec": 9.89,
+    "credits": 74,
+    "cached": false
+  },
+  {
+    "id": "n8",
+    "text": "Here is how the reel would look on Instagram. This is a preview, not a live post.",
+    "file": "docs/evidence/narration/n8.mp3",
+    "durationSec": 4.41,
+    "credits": 40,
+    "cached": false
+  },
+  {
+    "id": "n9",
+    "text": "These insights are sample data. The feedback loop may only quote real numbers, and it proposes one change that you approve.",
+    "file": "docs/evidence/narration/n9.mp3",
+    "durationSec": 7.57,
+    "credits": 62,
+    "cached": false
+  },
+  {
+    "id": "n10",
+    "text": "Agents propose. Code decides. That is Axys.",
+    "file": "docs/evidence/narration/n10.mp3",
+    "durationSec": 2.79,
+    "credits": 21,
+    "cached": false
+  }
+]

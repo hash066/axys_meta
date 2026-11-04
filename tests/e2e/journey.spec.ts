@@ -45,7 +45,7 @@ test("merchant creates, reviews and publishes an exact website version", async (
   await expect(
     page.getByRole("heading", { name: "Website preview" }),
   ).toBeVisible({ timeout: 30000 });
-  await expect(page.locator(".merchant-site")).toContainText("INR 125.00");
+  await expect(page.locator(".merchant-site")).toContainText("$125.00");
   await page.screenshot({
     path: "docs/evidence/desktop-review.png",
     fullPage: true,
@@ -78,7 +78,7 @@ test("merchant creates, reviews and publishes an exact website version", async (
     .getAttribute("href");
   const response = await page.request.get(url!);
   expect(response.ok()).toBeTruthy();
-  expect(await response.text()).toContain("INR 125.00");
+  expect(await response.text()).toContain("$125.00");
   await page.getByRole("button", { name: "View results" }).click();
   await page.getByRole("button", { name: "Load available results" }).click();
   await expect(
@@ -89,7 +89,7 @@ test("merchant creates, reviews and publishes an exact website version", async (
     fullPage: true,
   });
   await page.goto(url!);
-  await expect(page.locator(".merchant-site")).toContainText("INR 125.00");
+  await expect(page.locator(".merchant-site")).toContainText("$125.00");
   await expect
     .poll(() =>
       page

@@ -1,0 +1,92 @@
+{
+  "at": "2026-11-04T19:34:42.265Z",
+  "command": {
+    "understood": true,
+    "patch": {
+      "products": [
+        {
+          "ref": 0,
+          "priceMinor": 4900
+        }
+      ]
+    },
+    "diff": [
+      {
+        "field": "products[0].priceMinor",
+        "label": "Price of ceramic mug",
+        "from": "$39.00",
+        "to": "$49.00",
+        "quote": "forty nine dollars"
+      }
+    ],
+    "summary": "Price of ceramic mug: $39.00 -> $49.00",
+    "questions": [],
+    "model": "muse-wonder-1.0"
+  },
+  "preflight": {
+    "campaignId": "183e65f7-2e1d-4b4b-a29c-360d95654899",
+    "ok": false,
+    "issues": [
+      {
+        "severity": "block",
+        "surface": "site",
+        "text": "Price for \"ceramic mug\" on the site does not match the confirmed price",
+        "expected": "$49.00",
+        "found": "$39.00",
+        "locate": {
+          "text": "USD 39.00",
+          "reel": null
+        },
+        "fix": {
+          "kind": "regenerate",
+          "label": "Regenerate to use $49.00"
+        }
+      },
+      {
+        "severity": "block",
+        "surface": "reel",
+        "text": "Price for \"ceramic mug\" on the reel does not match the confirmed price",
+        "expected": "$49.00",
+        "found": "$39.00",
+        "locate": {
+          "text": "$39.00",
+          "reel": {
+            "shot": 0,
+            "box": [
+              0.4079,
+              0.7516,
+              0.1843,
+              0.0396
+            ]
+          }
+        },
+        "fix": {
+          "kind": "regenerate",
+          "label": "Regenerate to use $49.00"
+        }
+      },
+      {
+        "severity": "block",
+        "surface": "caption",
+        "text": "Price for \"ceramic mug\" on the caption does not match the confirmed price",
+        "expected": "$49.00",
+        "found": "$39.00",
+        "locate": {
+          "text": "$39.00",
+          "reel": null
+        },
+        "fix": {
+          "kind": "regenerate",
+          "label": "Regenerate to use $49.00"
+        }
+      }
+    ],
+    "model": "muse-wonder-1.0",
+    "checkedAt": "2026-11-04T19:34:42.261Z",
+    "revision": 4,
+    "fuzzy": {
+      "ran": true
+    }
+  },
+  "currency": "USD"
+}

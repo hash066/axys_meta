@@ -56,7 +56,7 @@ type Scenario = {
 type Issue = { severity: string; surface: string; text?: string; expected?: string; found?: string };
 type Verdict = { correct: boolean; wrongSurface: "site" | "reel" | "caption"; issues: Issue[]; engine: string };
 
-/** Two scenarios and their verdicts copied from a real run of the engine (4 Nov 2026). Used only when the lab endpoint is unreachable. */
+/** Two recorded fallback scenarios in dollars (the engine verdict shape is the real one). Used only when the lab endpoint is unreachable. */
 const SAMPLE: { scenario: Scenario; verdict: Omit<Verdict, "correct"> }[] = [
   {
     scenario: {
@@ -66,20 +66,20 @@ const SAMPLE: { scenario: Scenario; verdict: Omit<Verdict, "correct"> }[] = [
       facts: {
         business: "Marigold Bakehouse",
         offer: "Festive cake box with free city delivery",
-        collection: "Saturday 21 November 2026, 10am to 1pm IST",
+        collection: "Saturday, Nov 21, 10am to 1pm ET",
         contact: "https://marigold.example.com/order",
         products: [
-          { name: "Saffron Tea Cake", price: "INR 650.00" },
-          { name: "Raspberry Tart", price: "INR 480.00" },
+          { name: "Saffron Tea Cake", price: "$26.00" },
+          { name: "Raspberry Tart", price: "$19.00" },
         ],
       },
       surfaces: {
         site: {
           lines: [
             "Marigold Bakehouse", "Explore collection", "MADE FOR YOUR MOMENTS", "Festive cake box with free city delivery",
-            "Baked the morning of pickup.", "Saturday 21 November 2026, 10am to 1pm IST", "Enquire about this offer ↗",
-            "Saffron Tea Cake", "INR 650.00", "Raspberry Tart", "INR 480.00", "Marigold Bakehouse",
-            "Festive cake box with free city delivery · Saturday 21 November 2026, 10am to 1pm IST",
+            "Baked the morning of pickup.", "Saturday, Nov 21, 10am to 1pm ET", "Enquire about this offer ↗",
+            "Saffron Tea Cake", "$26.00", "Raspberry Tart", "$19.00", "Marigold Bakehouse",
+            "Festive cake box with free city delivery · Saturday, Nov 21, 10am to 1pm ET",
             "Contact the merchant to confirm availability.",
           ],
           links: [
@@ -89,15 +89,15 @@ const SAMPLE: { scenario: Scenario; verdict: Omit<Verdict, "correct"> }[] = [
         },
         reel: {
           shots: [
-            "Saffron Tea Cake\nINR 650.00\nSaturday 21 November 2026, 10am to 1pm IST",
-            "Raspberry Tart\nINR 840.00\nSaturday 21 November 2026, 10am to 1pm IST",
+            "Saffron Tea Cake\n$26.00\nSaturday, Nov 21, 10am to 1pm ET",
+            "Raspberry Tart\n$91.00\nSaturday, Nov 21, 10am to 1pm ET",
           ],
         },
         caption: {
           lines: [
             "Marigold Bakehouse", "Festive cake box with free city delivery", "Baked the morning of pickup.",
-            "Saffron Tea Cake — INR 650.00", "Raspberry Tart — INR 480.00",
-            "Saturday 21 November 2026, 10am to 1pm IST", "https://marigold.example.com/order",
+            "Saffron Tea Cake — $26.00", "Raspberry Tart — $19.00",
+            "Saturday, Nov 21, 10am to 1pm ET", "https://marigold.example.com/order",
           ],
         },
       },
@@ -105,7 +105,7 @@ const SAMPLE: { scenario: Scenario; verdict: Omit<Verdict, "correct"> }[] = [
     verdict: {
       wrongSurface: "reel",
       engine: "deterministicIssuesFromTexts",
-      issues: [{ severity: "block", surface: "reel", text: 'Price for "Raspberry Tart" on the reel does not match the confirmed price', expected: "INR 480.00", found: "INR 840.00" }],
+      issues: [{ severity: "block", surface: "reel", text: 'Price for "Raspberry Tart" on the reel does not match the confirmed price', expected: "$19.00", found: "$91.00" }],
     },
   },
   {
@@ -116,20 +116,20 @@ const SAMPLE: { scenario: Scenario; verdict: Omit<Verdict, "correct"> }[] = [
       facts: {
         business: "Stride Lane",
         offer: "Second-pair sneaker drop, numbered runs only",
-        collection: "Friday 27 November 2026, 6pm IST",
+        collection: "Friday, Nov 27, 6pm ET",
         contact: "https://stridelane.example.com/order",
         products: [
-          { name: "Court Low", price: "INR 3499.00" },
-          { name: "Trail Mid", price: "INR 4299.00" },
+          { name: "Court Low", price: "$89.00" },
+          { name: "Trail Mid", price: "$119.00" },
         ],
       },
       surfaces: {
         site: {
           lines: [
             "Stride Lane", "Explore collection", "MADE FOR YOUR MOMENTS", "Second-pair sneaker drop, numbered runs only",
-            "Sizes 6 to 11 in the first run.", "Friday 27 November 2026, 6pm IST", "Enquire about this offer ↗",
-            "Court Low", "INR 3499.00", "Trail Mid", "INR 4299.00", "Stride Lane",
-            "Second-pair sneaker drop, numbered runs only · Friday 27 November 2026, 6pm IST",
+            "Sizes 6 to 11 in the first run.", "Friday, Nov 27, 6pm ET", "Enquire about this offer ↗",
+            "Court Low", "$89.00", "Trail Mid", "$119.00", "Stride Lane",
+            "Second-pair sneaker drop, numbered runs only · Friday, Nov 27, 6pm ET",
             "Contact the merchant to confirm availability.",
           ],
           links: [
@@ -139,14 +139,14 @@ const SAMPLE: { scenario: Scenario; verdict: Omit<Verdict, "correct"> }[] = [
         },
         reel: {
           shots: [
-            "Court Low\nINR 3499.00\nFriday 27 November 2026, 6pm IST",
-            "Trail Mid\nINR 4299.00\nFriday 27 November 2026, 6pm IST",
+            "Court Low\n$89.00\nFriday, Nov 27, 6pm ET",
+            "Trail Mid\n$119.00\nFriday, Nov 27, 6pm ET",
           ],
         },
         caption: {
           lines: [
             "Stride Lane", "Second-pair sneaker drop, numbered runs only", "Sizes 6 to 11 in the first run.",
-            "Court Low — INR 3499.00", "Trail Mid — INR 4299.00", "Friday 27 November 2026, 6pm IST",
+            "Court Low — $89.00", "Trail Mid — $119.00", "Friday, Nov 27, 6pm ET",
             "https://stridelane.example.com/order",
           ],
         },

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import type { Campaign } from "../../packages/campaign/index";
 import "./meta.css";
+import { money as formatMoney } from "./money";
 
 /* ------------------------------------------------------------------ *
  * Fixture mode: `?fixture=meta` stubs ONLY the new Meta endpoints.
@@ -497,7 +498,7 @@ export type Locate = {
 export type IssueFix = { kind: "regenerate"; label: string };
 export type Issue = {
   severity: "block" | "warn";
-  surface: "site" | "reel" | "caption" | "voice" | "other";
+  surface: "site" | "reel" | "caption" | "voice" | "narration" | "other";
   text: string;
   expected: string;
   found: string;
@@ -543,7 +544,7 @@ function parseFix(v: any): IssueFix | null {
 export function parsePreflight(raw: any, campaignId: string): Preflight {
   if (!raw || typeof raw !== "object" || raw.campaignId !== campaignId)
     throw new MetaError("The server returned an unexpected preflight result.");
-  const surfaces = ["site", "reel", "caption", "voice"];
+  const surfaces = ["site", "reel", "caption", "voice", "narration"];
   return {
     campaignId,
     ok: raw.ok === true,
@@ -574,6 +575,7 @@ export const SURFACE_LABEL: Record<Issue["surface"], string> = {
   reel: "Reel",
   caption: "Caption",
   voice: "Voice brief",
+  narration: "Reel narration",
   other: "Other",
 };
 
@@ -611,7 +613,7 @@ const when = (iso: string) => {
 function fixtureStaleIssues(campaign: Campaign) {
   const art = campaign.site!.facts;
   const money = (q: { currency: string; priceMinor: number }) =>
-    `${q.currency} ${(q.priceMinor / 100).toFixed(2)}`;
+    formatMoney(q.currency, q.priceMinor);
   const issues: any[] = [];
   const lead = art.products[0];
   campaign.facts.products.forEach((p) => {
@@ -798,7 +800,7 @@ async function fixtureRequest(
   await sleep(1200, signal);
   if (campaign.id === STALE_ID && campaign.site && campaign.reel) {
     const money = (q: { currency: string; priceMinor: number }) =>
-      `${q.currency} ${(q.priceMinor / 100).toFixed(2)}`;
+      formatMoney(q.currency, q.priceMinor);
     const prod = campaign.facts.products[0];
     const expected = money(prod);
     const found = money(campaign.site.facts.products[0]);
@@ -872,7 +874,7 @@ async function fixtureRequest(
   const n = (fxRuns.get(campaign.id) ?? 0) + 1;
   fxRuns.set(campaign.id, n);
   const p = campaign.facts.products[0];
-  const price = (minor: number) => `${p.currency} ${(minor / 100).toFixed(2)}`;
+  const price = (minor: number) => formatMoney(p.currency, minor);
   return {
     campaignId: campaign.id,
     ok: n % 2 === 0,

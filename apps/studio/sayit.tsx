@@ -26,6 +26,7 @@ import {
 } from "./meta";
 import { RedPen, type RedPenController, type RedPenSettle } from "./redpen";
 import "./sayit.css";
+import { money as formatMoney } from "./money";
 
 /* ================================================================== *
  * Say it: say or type a change -> diff cards -> Apply -> every stale
@@ -82,7 +83,7 @@ function shown(v: unknown, field: string, label: string, c: Campaign): string {
       const p =
         c.facts.products.find((x) => label.includes(x.name)) ??
         c.facts.products[0];
-      return `${p?.currency ?? "INR"} ${(v / 100).toFixed(2)}`;
+      return formatMoney(p?.currency ?? "USD", v);
     }
     return String(v);
   }
@@ -174,7 +175,7 @@ const DAYS = [
 ];
 const STOP = new Set(["the", "and", "box", "tin", "set", "for", "our"]);
 const moneyOf = (p: { currency: string; priceMinor: number }) =>
-  `${p.currency} ${(p.priceMinor / 100).toFixed(2)}`;
+  formatMoney(p.currency, p.priceMinor);
 
 async function fixtureAsk(c: Campaign, text: string, signal: AbortSignal) {
   await sleepMs(1100, signal);
@@ -220,7 +221,7 @@ async function fixtureAsk(c: Campaign, text: string, signal: AbortSignal) {
       ? [{ p: prods[0], i: 0, at: 0 }]
       : [];
   const NUM =
-    /(?:₹|rs\.?\s*|inr\s*)?(\d+(?:\.\d{1,2})?)(?!\s*(?:am|pm|%|:|st|nd|rd|th))/i;
+    /(?:\$|₹|rs\.?\s*|inr\s*|usd\s*)?(\d+(?:\.\d{1,2})?)(?!\s*(?:am|pm|%|:|st|nd|rd|th))/i;
   targets.forEach((h, k) => {
     const seg = low.slice(h.at as number, targets[k + 1]?.at ?? low.length);
     const m = NUM.exec(seg);
@@ -977,14 +978,14 @@ function demoFacts(): Facts {
         id: "p1",
         name: "Weekend brownie box",
         priceMinor: 12900,
-        currency: "INR",
+        currency: "USD",
         assetId: "fixture:orig:0:0",
       },
       {
         id: "p2",
         name: "Salted caramel tin",
         priceMinor: 8900,
-        currency: "INR",
+        currency: "USD",
         assetId: "fixture:orig:1:0",
       },
     ],
@@ -1082,7 +1083,7 @@ export function CommandDemo() {
       </header>
       <FixtureBadge />
       <p className="muted rp-demo-note">
-        Scenario: a finished campaign (website, reel, caption at INR 129.00,
+        Scenario: a finished campaign (website, reel, caption at $129.00,
         pickup Saturday). Say a change, confirm the diff, and watch the red pen
         mark every surface that still shows the old values, then fix them in one
         press. The interpreter, the checks and every frame here are staged in

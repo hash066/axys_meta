@@ -24,6 +24,7 @@ import {
 } from "./meta";
 import { shotSeek, useAutoplayInView, usesFilmLayout } from "./film";
 import "./redpen.css";
+import { money as formatMoney } from "./money";
 
 /* ================================================================== *
  * Red Pen: marks the merchant's real artifacts like an editor's pen.
@@ -1168,7 +1169,9 @@ export function RedPen({
                             it.issue.locate.reel.shot !== shot
                             ? `On reel shot ${it.issue.locate.reel.shot + 1}. Choose that shot to see the mark.`
                             : "Could not be placed on the preview."
-                          : "No position available; listed only."}
+                          : it.issue.surface === "narration"
+                            ? "Spoken in the reel audio, so there is no frame to mark; listed only."
+                            : "No position available; listed only."}
                     {it.issue.fix && !ok && ` Fix: ${it.issue.fix.label}.`}
                   </span>
                 </span>
@@ -1190,14 +1193,14 @@ function staleCampaign(revision: 1 | 2): Campaign {
       id: "p1",
       name: "Weekend brownie box",
       priceMinor: 14900,
-      currency: "INR" as const,
+      currency: "USD" as const,
       assetId: "fixture:orig:0:0",
     },
     {
       id: "p2",
       name: "Salted caramel tin",
       priceMinor: 8900,
-      currency: "INR" as const,
+      currency: "USD" as const,
       assetId: "fixture:orig:1:0",
     },
   ];
@@ -1219,7 +1222,7 @@ function staleCampaign(revision: 1 | 2): Campaign {
         }
       : facts;
   const money = (p: { currency: string; priceMinor: number }) =>
-    `${p.currency} ${(p.priceMinor / 100).toFixed(2)}`;
+    formatMoney(p.currency, p.priceMinor);
   return {
     id: STALE_ID,
     tenantId: "fixture",
@@ -1276,7 +1279,7 @@ export function RedPenDemo() {
     return fixtureReelFrame(
       shot,
       p.name,
-      `${p.currency} ${(p.priceMinor / 100).toFixed(2)}`,
+      formatMoney(p.currency, p.priceMinor),
       camp.facts.collection,
     ).src;
   };
@@ -1304,8 +1307,8 @@ export function RedPenDemo() {
       </header>
       <FixtureBadge />
       <p className="muted rp-demo-note">
-        Scenario: the merchant changed the price to INR 149.00 after the
-        website, reel and caption were generated at INR 129.00. Preflight finds
+        Scenario: the merchant changed the price to $149.00 after the
+        website, reel and caption were generated at $129.00. Preflight finds
         it on all three, and the red pen marks it where it sits. Every number
         and frame on this page is fixture data staged in the browser.
       </p>

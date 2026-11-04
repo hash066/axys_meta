@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
@@ -14,12 +14,15 @@ import {
   sleepMs,
   type PreflightState,
 } from "./meta";
-import { AutoReel } from "./film";
+import { ReelPlayer } from "./film";
 import { RedPen, RedPenDemo } from "./redpen";
 import { CommandDemo, SayIt, useSayItLink } from "./sayit";
 import "./style.css";
 import "./site.css";
 import Landing from "./landing";
+import { WhatsAppSim } from "./whatsapp";
+import { InstagramSim, InstagramPreview } from "./instagram";
+import { InsightsDashboard, readInsights } from "./insights";
 async function api(
   path: string,
   body?: unknown,
@@ -77,7 +80,7 @@ const leadTransitions: Record<LeadStatus, LeadStatus[]> = {
   Spam: [],
   DoNotContact: [],
 };
-const currencies: Currency[] = ["INR", "USD", "EUR", "GBP"];
+const currencies: Currency[] = ["USD", "EUR", "GBP", "INR"];
 const countText = (value: number | null | undefined) =>
   value == null ? "Unknown" : value.toLocaleString();
 const statusText = (status: LeadStatus) =>
@@ -176,9 +179,32 @@ function StudioApp() {
       .catch(() => {});
     load().catch(() => {});
   }, []);
+  /* ?studio=1&draft=whatsapp (from the simulated WhatsApp chat): land on the Brief with the newest
+     WhatsApp draft preselected. Uses the same import path as the "Continue a WhatsApp draft" select. */
+  const draftLink = useRef(
+    new URLSearchParams(location.search).get("draft") === "whatsapp",
+  );
+  useEffect(() => {
+    if (!draftLink.current || !session) return;
+    const ready = whatsappDrafts.filter((d) => d.status !== "Imported");
+    if (!ready.length) return;
+    draftLink.current = false;
+    const newest = [...ready].sort((a, b) =>
+      String(b.updatedAt).localeCompare(String(a.updatedAt)),
+    )[0];
+    setStage(0);
+    pickDraft(newest.id);
+  }, [session, whatsappDrafts]);
   useEffect(() => {
     setNotice("");
   }, [stage]);
+  useEffect(() => {
+    // Results opens with whatever is already recorded (a plain GET; nothing is fetched from Instagram).
+    if (stage !== 4 || !c || metrics !== undefined) return;
+    Promise.all([api(`/campaigns/${c.id}/metrics`), loadCrm(c.id)])
+      .then(([m]) => setMetrics(m))
+      .catch(() => {});
+  }, [stage, c?.id]);
   useEffect(() => {
     if (c) setForm(c);
     if (c)
@@ -243,7 +269,7 @@ function StudioApp() {
         id: crypto.randomUUID(),
         name: file.name.replace(/\.[^.]+$/, ""),
         priceMinor: 0,
-        currency: "INR",
+        currency: "USD",
         assetId: data.data.id,
       },
     ]);
@@ -290,6 +316,88 @@ function StudioApp() {
     setCaps(await api("/capabilities"));
     return next;
   }
+  function pickDraft(id: string) {
+    const draft = whatsappDrafts.find(
+      (item) => item.id === id,
+    );
+    setSelectedWhatsappDraft(draft);
+    if (!draft) return;
+    const images = draft.media.filter(
+      (item: any) =>
+        item.kind === "image" &&
+        item.status === "Stored" &&
+        item.assetId,
+    );
+    const audio = draft.media.find(
+      (item: any) =>
+        item.kind === "audio" &&
+        item.status === "Stored" &&
+        item.assetId,
+    );
+    setC(undefined);
+    const planned = draft.plan;
+    setForm({
+      ...initial,
+      brief: draft.brief,
+      mode: draft.mode || "Both",
+      facts: {
+        ...initial.facts,
+        source: "whatsapp",
+        business: planned?.businessName || "",
+        offer: planned?.description || "",
+        collection: [
+          planned?.fulfillmentArea,
+          planned?.leadTime,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        contact: planned?.orderWhatsAppNumber
+          ? `https://wa.me/${String(planned.orderWhatsAppNumber).replace(/\D/g, "")}`
+          : "",
+        products: images.map(
+          (item: any, index: number) => ({
+            id: crypto.randomUUID(),
+            name:
+              planned?.catalog?.[index]?.name ||
+              `WhatsApp product ${index + 1}`,
+            priceMinor:
+              planned?.catalog?.[index]?.priceMinor || 0,
+            currency:
+              planned?.catalog?.[index]?.currency ||
+              ("USD" as const),
+            assetId: item.assetId,
+          }),
+        ),
+      },
+      ...(audio ? { voiceAssetId: audio.assetId } : {}),
+    });
+    setConfirmed(false);
+    setRights(false);
+    setNotice(
+      images.length
+        ? "WhatsApp media loaded. Fill every factual field, confirm image rights, then import."
+        : "WhatsApp text loaded. Wait for a stored image before importing this campaign.",
+    );
+      }
+  const connectedHandle = (
+    caps.connections.find((x: any) => x.active && x.accountId === account) ??
+    caps.connections.find((x: any) => x.active)
+  )?.username as string | undefined;
+  const reelHasVoice = c?.generation?.audio?.mix
+    ? c.generation.audio.mix === "voice+bed"
+    : undefined;
+  const igStats = (() => {
+    const k = readInsights(metrics).kpi;
+    return metrics && Object.keys(k).length
+      ? {
+          likes: k.likes,
+          comments: k.comments,
+          shares: k.shares,
+          saves: k.saves,
+          plays: k.plays,
+        }
+      : undefined;
+  })();
   const preflightBlocked = !!c && blockCount(preflight, c) > 0;
   const campaignLeads =
     c && leads
@@ -300,7 +408,7 @@ function StudioApp() {
       status: "",
       note: "",
       amount: "",
-      currency: "INR",
+      currency: "USD",
     };
   const changeLeadAction = (lead: CrmLead, change: Partial<LeadAction>) =>
     setLeadActions((current) => ({
@@ -552,7 +660,7 @@ function StudioApp() {
                     <input
                       value={form.facts.collection}
                       onChange={(e) => editFacts("collection", e.target.value)}
-                      placeholder="24 October 2026, 4–6 pm IST"
+                      placeholder="Saturday, Nov 7, 10am to 4pm ET"
                     />
                   </label>
                   <label>
@@ -651,69 +759,7 @@ ${text}`
                     Continue a WhatsApp draft
                     <select
                       value={selectedWhatsappDraft?.id || ""}
-                      onChange={(e) => {
-                        const draft = whatsappDrafts.find(
-                          (item) => item.id === e.target.value,
-                        );
-                        setSelectedWhatsappDraft(draft);
-                        if (!draft) return;
-                        const images = draft.media.filter(
-                          (item: any) =>
-                            item.kind === "image" &&
-                            item.status === "Stored" &&
-                            item.assetId,
-                        );
-                        const audio = draft.media.find(
-                          (item: any) =>
-                            item.kind === "audio" &&
-                            item.status === "Stored" &&
-                            item.assetId,
-                        );
-                        setC(undefined);
-                        const planned = draft.plan;
-                        setForm({
-                          ...initial,
-                          brief: draft.brief,
-                          mode: draft.mode || "Both",
-                          facts: {
-                            ...initial.facts,
-                            source: "whatsapp",
-                            business: planned?.businessName || "",
-                            offer: planned?.description || "",
-                            collection: [
-                              planned?.fulfillmentArea,
-                              planned?.leadTime,
-                            ]
-                              .filter(Boolean)
-                              .join(" · "),
-                            contact: planned?.orderWhatsAppNumber
-                              ? `https://wa.me/${String(planned.orderWhatsAppNumber).replace(/\D/g, "")}`
-                              : "",
-                            products: images.map(
-                              (item: any, index: number) => ({
-                                id: crypto.randomUUID(),
-                                name:
-                                  planned?.catalog?.[index]?.name ||
-                                  `WhatsApp product ${index + 1}`,
-                                priceMinor:
-                                  planned?.catalog?.[index]?.priceMinor || 0,
-                                currency:
-                                  planned?.catalog?.[index]?.currency ||
-                                  ("INR" as const),
-                                assetId: item.assetId,
-                              }),
-                            ),
-                          },
-                          ...(audio ? { voiceAssetId: audio.assetId } : {}),
-                        });
-                        setConfirmed(false);
-                        setRights(false);
-                        setNotice(
-                          images.length
-                            ? "WhatsApp media loaded. Fill every factual field, confirm image rights, then import."
-                            : "WhatsApp text loaded. Wait for a stored image before importing this campaign.",
-                        );
-                      }}
+                      onChange={(e) => pickDraft(e.target.value)}
                     >
                       <option value="">Choose a sender-bound draft</option>
                       {whatsappDrafts.map((draft) => (
@@ -839,7 +885,7 @@ ${text}`
                               setProduct(i, "currency", e.target.value)
                             }
                           >
-                            {["INR", "USD", "EUR", "GBP"].map((v) => (
+                            {["USD", "EUR", "GBP", "INR"].map((v) => (
                               <option key={v}>{v}</option>
                             ))}
                           </select>
@@ -1070,8 +1116,9 @@ ${text}`
                   <section>
                     <h2>Final reel</h2>
                     {c.videoAssetId ? (
-                      <AutoReel
-                        aria-label="Final reel preview, muted loop"
+                      <ReelPlayer
+                        generation={c.generation}
+                        aria-label="Final reel preview"
                         onError={() =>
                           setError(
                             "This browser cannot preview the final video. Open this workspace in Chrome to review it.",
@@ -1206,6 +1253,21 @@ ${text}`
                     </p>
                   </section>
                 </div>
+                {c.videoAssetId ? (
+                  <InstagramPreview
+                    videoSrc={`/api/v1/assets/${c.videoAssetId}`}
+                    posterSrc={
+                      c.videoPosterId
+                        ? `/api/v1/assets/${c.videoPosterId}`
+                        : undefined
+                    }
+                    caption={c.reel?.caption}
+                    business={c.facts.business}
+                    offer={c.facts.offer}
+                    connectedHandle={connectedHandle}
+                    hasAudio={reelHasVoice}
+                  />
+                ) : null}
                 <PreflightPanel
                   campaign={c}
                   state={preflight}
@@ -1377,6 +1439,46 @@ ${text}`
                     Refresh Instagram insights
                   </button>
                 </div>
+                <InsightsDashboard
+                  metrics={metrics}
+                  demoSamples={!!caps.demoSamples}
+                  busy={!!busy}
+                  onLoadSample={() =>
+                    run("Loading sample insights", async () => {
+                      setProposal(undefined);
+                      setMetrics(
+                        await api(`/campaigns/${c.id}/metrics/sample`, {
+                          preset: "reel-week-1",
+                        }),
+                      );
+                    })
+                  }
+                  canPropose={!!caps.muse?.available}
+                  onPropose={() =>
+                    run("Reviewing observations", async () =>
+                      setProposal(await api(`/campaigns/${c.id}/revision`, {})),
+                    )
+                  }
+                  proposal={proposal}
+                />
+                {c.videoAssetId ? (
+                  <InstagramPreview
+                    videoSrc={`/api/v1/assets/${c.videoAssetId}`}
+                    posterSrc={
+                      c.videoPosterId
+                        ? `/api/v1/assets/${c.videoPosterId}`
+                        : undefined
+                    }
+                    caption={c.reel?.caption}
+                    business={c.facts.business}
+                    offer={c.facts.offer}
+                    connectedHandle={connectedHandle}
+                    hasAudio={reelHasVoice}
+                    stats={igStats}
+                    statsAreSample={!!metrics?.sample}
+                    headingLevel={3}
+                  />
+                ) : null}
                 <section className="panel funnel-panel">
                   <div className="panel-heading">
                     <div>
@@ -1420,6 +1522,8 @@ ${text}`
                     sales lift.
                   </p>
                 </section>
+                <details className="panel raw-records">
+                  <summary>Raw records returned by the server</summary>
                 <div className="two">
                   <section className="panel">
                     <p className="eyebrow">WEBSITE</p>
@@ -1454,6 +1558,7 @@ ${text}`
                     )}
                   </section>
                 </div>
+                </details>
                 <section className="panel crm-panel">
                   <div className="panel-heading">
                     <div>
@@ -1671,26 +1776,6 @@ ${text}`
                     </div>
                   )}
                 </section>
-                <section className="panel">
-                  <h2>What should change next?</h2>
-                  <p>
-                    Muse Wonder proposes a revision grounded in the available
-                    observations. You review and approve any new campaign.
-                  </p>
-                  <button
-                    disabled={!caps.muse?.available || !!busy}
-                    onClick={() =>
-                      run("Reviewing observations", async () =>
-                        setProposal(
-                          await api(`/campaigns/${c.id}/revision`, {}),
-                        ),
-                      )
-                    }
-                  >
-                    Propose a revision
-                  </button>
-                  {proposal && <p>{proposal.proposal.suggestion}</p>}
-                </section>
               </>
             ) : (
               <Empty
@@ -1724,6 +1809,8 @@ function Empty({ text, action }: { text: string; action: () => void }) {
 function App() {
   const q = new URLSearchParams(window.location.search);
   const studio = q.has("studio") || q.has("fixture");
+  if (q.get("sim") === "whatsapp") return <WhatsAppSim />;
+  if (q.get("sim") === "instagram") return <InstagramSim />;
   if (SCENARIO_STALE) return <RedPenDemo />;
   if (SCENARIO_COMMAND) return <CommandDemo />;
   return window.location.pathname === "/" && !studio ? (

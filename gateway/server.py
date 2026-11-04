@@ -215,3 +215,36 @@ async def segment_multi(image: UploadFile = File(...), concepts: str = Form(...)
         return _err(str(exc), 503)
     except Exception as exc:  # noqa: BLE001
         return _err(f"SAM 3.1: {exc}", 502)
+
+
+from . import speech as sp  # noqa: E402
+
+
+class SpeakCall(BaseModel):
+    text: str = Field(min_length=1, max_length=400)
+    voice: str = Field(default="narrator", min_length=2, max_length=40)
+    model: str | None = Field(default=None, pattern="^eleven_[a-z0-9_]+$")
+
+
+@app.get("/v1/speak/budget")
+async def speak_budget():
+    try:
+        return await asyncio.to_thread(sp.budget)
+    except sp.SpeechError as exc:
+        return _err(str(exc), exc.status)
+
+
+@app.post("/v1/speak")
+async def speak(body: SpeakCall):
+    """Spoken audio via ElevenLabs (Meta's Model API has no speech synthesis). Cached by (voice, model, text)."""
+    try:
+        r = await asyncio.to_thread(sp.speak, body.text, body.voice, body.model)
+    except sp.SpeechError as exc:
+        return _err(str(exc), exc.status)
+    return {
+        "audio_mp3_b64": _b64(r["audio"]),
+        "cached": r["cached"],
+        "credits_charged": r["credits_charged"],
+        "voice_id": r["voice_id"],
+        "model": r["model"],
+    }

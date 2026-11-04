@@ -12,3 +12,4 @@ __pycache__/
 .worker-audit.bin
 var-test-*/
 .pytest_cache/
+gateway/.speech-cache/

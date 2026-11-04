@@ -1,9 +1,9 @@
 {
-  "startedAt": "2026-11-04T13:25:46.544Z",
+  "startedAt": "2026-11-04T19:29:46.634Z",
   "steps": [
     {
       "name": "capabilities",
-      "at": "2026-11-04T13:25:46.664Z",
+      "at": "2026-11-04T19:29:46.747Z",
       "muse": {
         "available": true,
         "keyConfigured": true,
@@ -19,20 +19,20 @@
     },
     {
       "name": "upload",
-      "at": "2026-11-04T13:25:46.781Z",
+      "at": "2026-11-04T19:29:46.890Z",
       "status": 201
     },
     {
       "name": "create",
-      "at": "2026-11-04T13:25:46.787Z",
+      "at": "2026-11-04T19:29:46.899Z",
       "status": 201,
       "state": "Draft"
     },
     {
       "name": "enrich: SAM 3.1 + Muse Image + Spark fidelity",
-      "at": "2026-11-04T13:27:10.586Z",
+      "at": "2026-11-04T19:31:26.036Z",
       "status": 200,
-      "seconds": 84,
+      "seconds": 99,
       "products": [
         {
           "found": true,
@@ -42,15 +42,19 @@
       ],
       "heroes": [
         {
-          "faithful": true,
-          "differences": []
+          "faithful": false,
+          "differences": [
+            "handle loop is larger, longer and thinner",
+            "mug body is taller and narrower in proportion",
+            "blue glaze is brighter / more saturated"
+          ]
         }
       ],
       "warnings": []
     },
     {
       "name": "generate: Muse Wonder plan + FFmpeg reel",
-      "at": "2026-11-04T13:27:38.839Z",
+      "at": "2026-11-04T19:32:07.157Z",
       "status": 202,
       "state": "NeedsReview",
       "aiPlanned": true,
@@ -62,29 +66,29 @@
     },
     {
       "name": "preflight (clean)",
-      "at": "2026-11-04T13:27:42.935Z",
+      "at": "2026-11-04T19:32:11.786Z",
       "ok": true,
       "issues": [],
       "model": "muse-wonder-1.0",
       "fuzzyRan": true
     },
     {
-      "name": "edit price INR 129 -> 149 (keepGenerated)",
-      "at": "2026-11-04T13:27:42.950Z",
+      "name": "edit price after generation (keepGenerated)",
+      "at": "2026-11-04T19:32:11.799Z",
       "status": 200
     },
     {
       "name": "preflight (stale price)",
-      "at": "2026-11-04T13:27:47.847Z",
+      "at": "2026-11-04T19:32:15.069Z",
       "ok": false,
       "issues": [
-        "block/site: expected INR 149.00 found INR 129.00",
-        "block/reel: expected INR 149.00 found INR 129.00",
-        "block/caption: expected INR 149.00 found INR 129.00"
+        "block/site: expected $39.00 found $29.00",
+        "block/reel: expected $39.00 found $29.00",
+        "block/caption: expected $39.00 found $29.00"
       ],
       "model": "muse-wonder-1.0"
     }
   ],
-  "finishedAt": "2026-11-04T13:27:47.884Z",
-  "campaignId": "914ad368-9ff8-4f1b-bb04-74564e309dbd"
+  "finishedAt": "2026-11-04T19:32:15.135Z",
+  "campaignId": "183e65f7-2e1d-4b4b-a29c-360d95654899"
 }

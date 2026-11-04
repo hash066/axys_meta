@@ -30,6 +30,7 @@ import {
 } from "../services/video/queue.ts";
 import { decrypt, required, publicOrigin, sign } from "./security.ts";
 import { Credits } from "./credits.ts";
+import { addReelAudio } from "./reel-audio.ts";
 export type Asset = {
   id: string;
   tenantId: string;
@@ -57,6 +58,12 @@ export class Engine {
     public videoQueue = new VideoQueue(store),
     public gateway: MuseGateway = new MuseGateway(),
   ) {}
+  /**
+   * Add narration + music bed to the finished reel. Off by default so direct
+   * Engine use (tests, scripts) can never reach a live voice gateway; the server
+   * entry point turns it on (AXYS_NARRATION=off disables it).
+   */
+  narrate = false;
   get(tenant: string, id: string) {
     const c = this.store.get<Campaign>("campaign", tenant, id);
     if (!c) throw new Error("Campaign not found");
@@ -186,6 +193,14 @@ export class Engine {
           ? Math.max(0, Date.parse(c.approval.schedule))
           : 0,
       );
+    // A retry at the same revision after a failed generation (for example the planner asked a question, or a model call failed
+    // transiently) must run again. The unique job row already exists, so reset it instead of leaving the campaign stuck in Generating.
+    if (kind === "generate" || kind === "generate-ai")
+      this.store.db
+        .prepare(
+          "UPDATE jobs SET state='queued',available=0,lease=0,error=NULL,tries=0 WHERE tenant=? AND campaign=? AND kind=? AND revision=? AND state='failed'",
+        )
+        .run(c.tenantId, c.id, kind, c.revision);
   }
   approval(c: Campaign, accountId: string, schedule: string, expected: string) {
     if (c.site && c.reel) assertPreflightClear(this.store, c);
@@ -483,13 +498,62 @@ export class Engine {
       );
       // Which look each product got (the Studio seeks the facts card by it).
       c.generation = { ...c.generation!, reelLayout: rendered.layouts } as typeof c.generation;
-      const a = await this.asset(c.tenantId, rendered.bytes, "video/mp4");
+      let finalBytes = rendered.bytes;
+      let finalProbe: unknown = rendered.probe;
+      if (this.narrate) {
+        const options = this.store.get<{ revision: number; audio: boolean }>(
+          "generate-options",
+          c.tenantId,
+          c.id,
+        );
+        if (options?.revision === c.revision && options.audio === false) {
+          c.generation = {
+            ...c.generation!,
+            audio: { mix: "silent", reason: "Audio skipped (audio:false)" },
+          };
+        } else {
+          const subject = loadEnrichment(this.store, c)?.direction?.subject;
+          const audio = await addReelAudio(
+            this.store,
+            this.gateway,
+            c,
+            path.join(
+              this.store.root,
+              "renders",
+              c.tenantId,
+              c.id,
+              String(c.revision),
+            ),
+            rendered,
+            subject,
+          );
+          finalBytes = audio.bytes;
+          finalProbe = audio.probe;
+          const { narration, warnings } = audio;
+          c.generation = {
+            ...c.generation!,
+            audio: audio.audio,
+            ...(narration ? { narration } : {}),
+            ...(warnings.length ? { warnings } : {}),
+          };
+          if (narration)
+            c.trace = {
+              ...(c.trace && typeof c.trace === "object"
+                ? (c.trace as object)
+                : c.trace === undefined
+                  ? {}
+                  : { planning: c.trace }),
+              narration,
+            };
+        }
+      }
+      const a = await this.asset(c.tenantId, finalBytes, "video/mp4");
       c.videoPosterId = (
         await this.asset(c.tenantId, rendered.poster, "image/png")
       ).id;
       c.videoAssetId = a.id;
       c.videoHash = a.hash;
-      this.store.put("probe", c.tenantId, a.id, rendered.probe);
+      this.store.put("probe", c.tenantId, a.id, finalProbe);
     }
     if (this.get(c.tenantId, c.id).revision !== c.revision) return true;
     c.state = "NeedsReview";

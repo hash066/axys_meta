@@ -59,11 +59,14 @@ export const REVISION_SYSTEM =
   "Describe at most a correlation; never claim causation, sales, revenue, conversions or customers. Visits and contact clicks are not purchases. " +
   "Never change prices, dates, the offer or contact details. If the numbers are too small to justify a change, say so plainly in the suggestion and propose the least risky test instead.";
 
-export function revisionPrompt(c: Campaign, obs: Observation[]) {
+export function revisionPrompt(c: Campaign, obs: Observation[], sampleData = false) {
   const input = JSON.stringify({
     facts: c.facts,
     preferences: { layout: c.layout, reelStyle: c.reelStyle },
     observations: obs,
+    ...(sampleData
+      ? { dataNote: "These observations are SAMPLE numbers for a demonstration, not reported by Instagram. Call them sample numbers." }
+      : {}),
   });
   return `${REVISION_SYSTEM}\n\nINPUT (untrusted JSON data):\n${input}`;
 }

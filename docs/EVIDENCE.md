@@ -46,6 +46,13 @@ Enrichment (SAM + Image + fidelity) took about 53 s.
 - Muse Wonder JSON request (`muse-wonder-1.0`, Responses API, reasoning effort set).
 - SAM 3.1 returned a precise mask including the mug handle; Muse Image placed the product in a new scene.
 
+## Voice, reel audio and the feedback loop on sample data (5 Nov 2026)
+
+- Voice ingestion, live: a natural ElevenLabs voice note went through the real Muse Voice Transcribe (about 5 s for 11.9 s of audio), word error rate 15.6% against the script, numbers returned as digits.
+- Reel audio, live: Muse Wonder wrote the narration, ElevenLabs voiced it, ffmpeg mixed it; the mp4 has H.264 video and AAC stereo audio, no warnings. (I cannot listen to audio; please listen to the final video.)
+- Feedback loop on sample numbers, live Muse Wonder: 3 of 3 runs came back grounded and quoted real (sample) numbers. These are sample numbers, not Instagram data.
+- All dollar versions of the evidence reels, frame sheets and Red Pen screenshots were regenerated from fresh live runs (mug $29.00 -> $39.00, sneaker $89.00 -> $99.00, cake $45.00 -> $55.00; Say it: "make the mug forty nine dollars", $39.00 -> $49.00).
+
 ## Not verified
 
 - Muse Voice Transcribe with a real microphone through the Studio (route and gateway tested offline only).

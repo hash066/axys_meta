@@ -53,6 +53,14 @@ const Scene = z.object({
   }),
 });
 const Plate = z.object({ image_png_b64: z.string().min(1) });
+const Speak = z.object({
+  audio_mp3_b64: z.string().min(1),
+  cached: z.boolean(),
+  credits_charged: z.number().min(0),
+  voice_id: z.string().max(100),
+  model: z.string().max(100),
+});
+const MAX_MP3_BYTES = 4 * 1024 * 1024;
 const JsonReply = z.object({
   json: z.record(z.string(), z.unknown()),
   model: z.string().max(100),
@@ -72,6 +80,13 @@ export type SceneResult = {
   image: Buffer;
   faithful: boolean | null;
   differences: string[];
+};
+export type SpeakResult = {
+  audio: Buffer;
+  cached: boolean;
+  credits: number;
+  voiceId: string;
+  model: string;
 };
 export type JsonRequest = {
   model: "wonder" | "spark";
@@ -313,6 +328,41 @@ export class MuseGateway {
       Plate,
     );
     return decodePng(r.image_png_b64, "backdrop plate");
+  }
+  /**
+   * Spoken audio (ElevenLabs behind the gateway; Meta's API has no speech model).
+   * SPENDS REAL CREDITS unless the gateway has the clip cached. Callers must not
+   * loop or retry. Throws GatewayError on any failure; never fabricates audio.
+   */
+  async speak(text: string, voice = "reel"): Promise<SpeakResult> {
+    const clean = text.replace(/\s+/g, " ").trim();
+    if (!clean || clean.length > 400)
+      throw new GatewayError("Spoken text must be 1 to 400 characters", "bad_request");
+    const r = await this.call(
+      "/v1/speak",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: clean, voice }),
+      },
+      60000,
+      Speak,
+    );
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(r.audio_mp3_b64))
+      throw new GatewayError("Muse gateway returned invalid audio", "bad_response");
+    const audio = Buffer.from(r.audio_mp3_b64, "base64");
+    const mp3 =
+      audio.subarray(0, 3).toString() === "ID3" ||
+      (audio[0] === 0xff && (audio[1] & 0xe0) === 0xe0);
+    if (audio.length < 16 || audio.length > MAX_MP3_BYTES || !mp3)
+      throw new GatewayError("Muse gateway returned invalid audio", "bad_response");
+    return {
+      audio,
+      cached: r.cached,
+      credits: r.credits_charged,
+      voiceId: r.voice_id,
+      model: r.model,
+    };
   }
   json(request: JsonRequest) {
     if (request.prompt.length > 120000)

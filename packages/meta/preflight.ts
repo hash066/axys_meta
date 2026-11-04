@@ -2,7 +2,13 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { z } from "zod";
 import { Site } from "../renderers/Site.tsx";
-import { hash, price, specs, type Campaign } from "../campaign/index.ts";
+import {
+  formatMoney,
+  hash,
+  price,
+  specs,
+  type Campaign,
+} from "../campaign/index.ts";
 import type { MuseGateway } from "./gateway.ts";
 import type { Store } from "../../server/store.ts";
 import { consumeCall } from "./budget.ts";
@@ -24,7 +30,7 @@ export type { Fix, Locate, ReelBox } from "./redpen.ts";
  *     only: a model opinion never blocks, a code-detected mismatch always does.
  */
 export type Severity = "block" | "warn";
-export type Surface = "site" | "reel" | "caption" | "voice";
+export type Surface = "site" | "reel" | "caption" | "voice" | "narration";
 export type Issue = {
   severity: Severity;
   surface: Surface;
@@ -67,7 +73,12 @@ export class PreflightBlockedError extends Error {
 }
 
 type Currency = "INR" | "USD" | "EUR" | "GBP";
-export type Money = { currency: Currency; minor: number; raw: string };
+/** "OTHER" = a dollar-like sign that is not US dollars (A$, C$, NZ$ ...): never equal to a confirmed price. */
+export type Money = {
+  currency: Currency | "OTHER";
+  minor: number;
+  raw: string;
+};
 
 const SYMBOL: Record<string, Currency> = {
   "₹": "INR",
@@ -90,14 +101,22 @@ const SYMBOL: Record<string, Currency> = {
   pounds: "GBP",
 };
 const AMOUNT = String.raw`\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?`;
+// A letter prefix glued to "$" (US$, USD$, A$, C$, NZ$) is read as a whole:
+// only US/USD mean US dollars, any other prefix is a different currency.
 const PREFIX = new RegExp(
-  String.raw`(₹|\$|€|£|\bRs\.?|\bINR|\bUSD|\bEUR|\bGBP)\s*(${AMOUNT})`,
+  String.raw`((?<![A-Za-z])[A-Za-z]{1,3}\$|\$|₹|€|£|\bRs\.?|\bINR|\bUSD|\bEUR|\bGBP)\s*(${AMOUNT})`,
   "gi",
 );
 const SUFFIX = new RegExp(
-  String.raw`(${AMOUNT})\s*(rupees?|dollars?|euros?|pounds?|\brs\b\.?|\binr\b|\busd\b|\beur\b|\bgbp\b)`,
+  String.raw`(${AMOUNT})\s*((?:us\s+)?dollars?|rupees?|euros?|pounds?|\brs\b\.?|\binr\b|\busd\b|\beur\b|\bgbp\b)`,
   "gi",
 );
+const prefixCurrency = (sym: string): Money["currency"] => {
+  const k = sym.toLowerCase();
+  if (k.endsWith("$") && k.length > 1)
+    return k === "us$" || k === "usd$" ? "USD" : "OTHER";
+  return SYMBOL[k];
+};
 const minorOf = (amount: string) =>
   Math.round(Number(amount.replace(/,/g, "")) * 100);
 
@@ -106,7 +125,7 @@ export function parsePrices(text: string): Money[] {
   const found: (Money & { start: number; end: number })[] = [];
   for (const m of text.matchAll(PREFIX))
     found.push({
-      currency: SYMBOL[m[1].toLowerCase()],
+      currency: prefixCurrency(m[1]),
       minor: minorOf(m[2]),
       raw: m[0].trim(),
       start: m.index!,
@@ -117,7 +136,13 @@ export function parsePrices(text: string): Money[] {
       end = start + m[0].length;
     if (found.some((f) => start < f.end && end > f.start)) continue;
     found.push({
-      currency: SYMBOL[m[2].toLowerCase().replace(/\.$/, "")] ?? "INR",
+      currency:
+        SYMBOL[
+          m[2]
+            .toLowerCase()
+            .replace(/\.$/, "")
+            .replace(/^us\s+/, "")
+        ] ?? "INR",
       minor: minorOf(m[1]),
       raw: m[0].trim(),
       start,
@@ -177,12 +202,13 @@ export function parseExpiryDates(text: string): { raw: string; day: string }[] {
   }
   return out;
 }
-/** Acceptable calendar days for an ISO instant: UTC day and IST day. */
+/** Acceptable calendar days for an ISO instant: the UTC day, the IST day and
+ * the US days (Eastern and Pacific, standard and daylight time). */
 const expiryDays = (iso: string) => {
   const t = Date.parse(iso);
   const day = (offsetMs: number) =>
     new Date(t + offsetMs).toISOString().slice(0, 10);
-  return new Set([day(0), day(5.5 * 3600000)]);
+  return new Set([0, 5.5, -4, -5, -7, -8].map((h) => day(h * 3600000)));
 };
 
 /** Comparison form: whitespace collapsed, case folded, and typographic dashes
@@ -206,8 +232,8 @@ const decode = (s: string) =>
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&");
-const money = (m: { currency: string; minor: number }) =>
-  `${m.currency} ${(m.minor / 100).toFixed(2)}`;
+const money = (m: { currency: string; minor: number; raw?: string }) =>
+  m.currency === "OTHER" && m.raw ? m.raw : formatMoney(m.currency, m.minor);
 const clip = (s: string, n = 160) =>
   s.length > n ? s.slice(0, n - 1) + "…" : s;
 
@@ -220,6 +246,8 @@ export type SurfaceTexts = {
   };
   reel?: { shots: string[] };
   caption?: { lines: string[] };
+  /** The sentence spoken over the reel (generation.narration.text). */
+  narration?: { text: string };
 };
 /** What a visitor/viewer would actually read, derived from the stored specs. */
 function siteTexts(spec: NonNullable<Campaign["site"]>) {
@@ -252,6 +280,8 @@ export function surfaceTexts(c: Campaign): SurfaceTexts {
     out.reel = { shots: c.reel.shots.map((s) => s.text) };
     out.caption = { lines: c.reel.caption.split("\n") };
   }
+  const spoken = c.generation?.narration?.text;
+  if (spoken?.trim()) out.narration = { text: spoken };
   return out;
 }
 
@@ -422,7 +452,7 @@ function checkStrayPrices(
     out.push({
       severity: "block",
       surface,
-      text: `${surface === "voice" ? "Spoken" : "Unexpected"} price "${m.raw}" is not one of the confirmed prices`,
+      text: `${surface === "voice" || surface === "narration" ? "Spoken" : "Unexpected"} price "${m.raw}" is not one of the confirmed prices`,
       expected: c.facts.products.map(price).join(", "),
       found: money(m),
       hint: { wrong: m.raw },
@@ -637,8 +667,14 @@ export function deterministicIssuesFromTexts(
     checkExpiry("caption", joined, c, out);
   }
 
-  if (voiceTranscript?.trim()) {
-    const text = voiceTranscript.slice(0, 6000);
+  /** Spoken surfaces (seller voice note, reel narration): per-product price
+   * pairing, stray prices and expiry dates, same exact rules as written text. */
+  const spoken = (
+    surface: "voice" | "narration",
+    raw: string,
+    wording: (name: string) => string,
+  ) => {
+    const text = raw.slice(0, 6000);
     const sentences = text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean);
     const flagged = new Set<string>();
     for (const s of sentences) {
@@ -670,16 +706,29 @@ export function deterministicIssuesFromTexts(
         for (const m of prices) flagged.add(m.raw);
         out.push({
           severity: "block",
-          surface: "voice",
-          text: `Seller said a different price for "${p.name}" than the confirmed price`,
+          surface,
+          text: wording(p.name),
           expected: price(p),
           found: money(prices[0]),
         });
       }
     }
-    checkStrayPrices("voice", text, c, flagged, out);
-    checkExpiry("voice", text, c, out);
-  }
+    checkStrayPrices(surface, text, c, flagged, out);
+    checkExpiry(surface, text, c, out);
+  };
+  if (voiceTranscript?.trim())
+    spoken(
+      "voice",
+      voiceTranscript,
+      (n) => `Seller said a different price for "${n}" than the confirmed price`,
+    );
+  if (t.narration?.text.trim())
+    spoken(
+      "narration",
+      t.narration.text,
+      (n) =>
+        `Reel narration says a different price for "${n}" than the confirmed price`,
+    );
   return annotate(out, c, t, opts);
 }
 
@@ -754,7 +803,7 @@ function annotate(
     expected.caption = specs(c, c.site?.headline).reel.caption.split("\n");
   const locate = (i: Raw): Locate | null => {
     const h = i.hint;
-    if (!h || i.surface === "voice") return null;
+    if (!h || i.surface === "voice" || i.surface === "narration") return null;
     const lines = surfaceLines(i.surface);
     if (!lines) return null;
     let wrong = h.wrong;

@@ -198,3 +198,21 @@ capability grid, pipeline tabs, mini-games). Every number on the landing page ca
 | Assets | `apps/studio/public/landing/` | Real reels and optimised frames from the live runs in `docs/evidence/`. |
 
 Test status after this round: 198 Node tests pass.
+
+## Round 6: voice, reel audio, WhatsApp flow, Instagram preview, insights, dollars
+
+Meta's Model API has no speech synthesis or music model (Muse Voice Transcribe only transcribes). Spoken audio therefore comes from ElevenLabs through the Muse
+gateway, and the words are written by Muse Wonder and validated in code. The WhatsApp conversation, the Instagram view and the insights numbers are SIMULATED and
+labelled as such inside the product; no Instagram login or post was made.
+
+| Area | Where | What |
+|---|---|---|
+| Voice endpoint | `gateway/speech.py`, `gateway/server.py` (`POST /v1/speak`, `GET /v1/speak/budget`) | ElevenLabs text to speech (default model costs 0.5 credit per character), disk cache by (voice, model, text), local credit ledger and a guard that refuses to spend the last credits. The key lives only in the gateway's environment. |
+| Voice ingestion (real) | `scripts/make-voice-note.mjs`, `apps/studio/public/demo/voice-note.{mp3,json}` | A natural spoken merchant note (ElevenLabs) is converted to 16 kHz PCM and transcribed by the real Muse Voice Transcribe: "...this Saturday, November 7th, 10 to 4. It's $89...". Word error rate against the spoken script 15.6% (mostly numbers written as digits). |
+| Narration lines for the demo | `scripts/demo-narration.json`, `scripts/make-narration.mjs` | 10 lines, 64.9 s of speech, generated once and cached. |
+| Reel audio | `packages/meta/narration.ts`, `packages/renderers/audio.ts`, `server/reel-audio.ts`, `server/engine.ts` | Muse Wonder writes at most 24 words from the confirmed facts, code validates every number and date and rejects claim words (deterministic template fallback), the validated text is cached per campaign facts, ElevenLabs speaks it, ffmpeg adds a locally synthesised bed with ducking and a limiter and muxes AAC stereo while copying the video stream. A spoken price or date that does not match blocks approval (new preflight surface "narration"). Live check: "Clay & Co ceramic mug, $49.00. Collection Saturday, Nov 7, 10am to 4pm ET. Send a message to order." |
+| Dollars | `packages/campaign/index.ts` `formatMoney`, `packages/meta/preflight.ts`, `lab.ts`, Studio defaults | USD default, `$129.00` formatting; preflight treats `$129`, `USD 129.00`, `129 dollars`, `129.00 USD` as the same price and blocks different numbers; A$/C$/NZ$ count as another currency. Offline eval after the change: 1,778 cases, 387/387 drift, 124/124 stale, 0/1,137 benign false alarms, 0/26 controls. |
+| WhatsApp flow (simulated) | `apps/studio/whatsapp.tsx`, `scripts/seed-whatsapp-draft.mts`, `packages/meta/intake.ts` | `?sim=whatsapp[&autoplay=1]`: photo, the real voice note (plays), the real Muse Voice transcript, an extracted-facts checklist, Confirm, "Draft ready", then `/?studio=1&draft=whatsapp` imports a seeded draft through the Studio's existing import path. The extraction is deterministic, not a model. |
+| Instagram preview (simulated) | `apps/studio/instagram.tsx` | Reel and profile grid for a typed handle; tagged "Preview, not posted"; no login, no network call to Instagram. |
+| Insights (sample) | `apps/studio/insights.tsx`, `server/sample-insights.ts` | Only with `AXYS_DEMO_SAMPLES=true`: realistic, internally consistent sample numbers, flagged `sample:true`, loud ribbon on every group; the real grounded feedback planner runs on them. Live check: 3 of 3 runs grounded, quoting site_visit 58, site_contact 3 and plays 18,420, and saying the numbers are too small to justify a major change. |
+| Recording | `scripts/record-demo2.mjs`, `scripts/mix-demo-audio.mjs` | Demo v2: landing, WhatsApp simulation, Studio on the draft, live pipeline, reel with audio, Say it / Red Pen / Fix, Instagram preview, sample insights and feedback loop; narration and audio cues mixed in. |

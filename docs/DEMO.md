@@ -35,3 +35,14 @@ Not shown, because it is not verified: a real Instagram post, WhatsApp, micropho
 - 1:52 "Say a change in plain words. Code checks every number against what you said. Red Pen marks every stale surface. One press fixes them."
 - 2:24 "Publishing needs your own Instagram account and is off by default; we tested that path against a local fake and say so. With no data yet, the feedback loop makes no model call."
 - 2:45 "Agents propose. Code decides."
+
+## Demo v2 (current `docs/evidence/demo.mp4`, 2:58)
+
+Storyboard: landing + problem game, then a simulated WhatsApp chat in which the merchant's voice note plays and is transcribed by the real Muse Voice Transcribe, then continues in Studio: Meta Lens (Spark + SAM), Muse Wonder plan, the product-aware reel with audio, Say it, Red Pen, Fix, an Instagram preview, results with sample insights and the grounded feedback loop.
+
+What is real: every model call (Spark, SAM, Wonder, Image, Voice Transcribe), the reel render and its audio, the preflight checks, the grounding check on the revision.
+What is simulated (labelled in the caption/footer): the WhatsApp chat, the Instagram view (no login, nothing posted) and the insights numbers (sample data).
+Narration and the merchant voice note are ElevenLabs voices behind the gateway (Meta has no speech-synthesis model); the words are fixed in `scripts/demo-narration.json`.
+In the final take the feedback card shows the deterministic fallback: the model's text claimed sales, so the guard replaced it. That is the designed behaviour.
+
+Rebuild: `node scripts/record-demo2.mjs`, `node scripts/record-feedback.mjs`, `node scripts/cut-demo.mjs`, `node scripts/mix-demo-audio.mjs` (use `CUE_OVERRIDES` after splicing).

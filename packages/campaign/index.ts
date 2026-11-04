@@ -58,7 +58,27 @@ export type Campaign = Input & {
       productId: string;
       shotIndex: number;
     }[];
+    /** Spoken narration of the outcome reel (absent when audio was skipped). */
+    narration?: Narration;
+    /** Non-fatal problems while generating (for example narration voice unavailable). */
+    warnings?: string[];
+    /** What the delivered reel carries: voice+bed, bed only, silent, or skipped ({audio:false}). */
+    audio?: { mix: "voice+bed" | "bed" | "silent" | "skipped"; reason?: string };
   };
+};
+export type Narration = {
+  text: string;
+  voice: string;
+  model: string;
+  credits: number;
+  cached: boolean;
+  source: "wonder" | "template";
+  /** True when the validated text was reused from the narration text cache. */
+  textCached?: boolean;
+  /** Model that wrote the words (Muse Wonder) when it answered. */
+  textModel?: string | null;
+  /** Why the template replaced Wonder, when it did. */
+  fallbackReason?: string;
 };
 export type SiteSpec = {
   schemaVersion: 1;
@@ -119,8 +139,19 @@ export function hash(value: unknown) {
     )
     .digest("hex");
 }
+/** Display form of an amount: USD $129.00, EUR €129.00, GBP £129.00, INR keeps "INR 129.00". */
+export function formatMoney(currency: string, minor: number) {
+  const n = (minor / 100).toFixed(2);
+  return currency === "USD"
+    ? `$${n}`
+    : currency === "EUR"
+      ? `€${n}`
+      : currency === "GBP"
+        ? `£${n}`
+        : `${currency} ${n}`;
+}
 export const price = (p: Input["facts"]["products"][number]) =>
-  `${p.currency} ${(p.priceMinor / 100).toFixed(2)}`;
+  formatMoney(p.currency, p.priceMinor);
 export function specs(c: Input, headline = c.facts.offer, hero?: SiteHero) {
   const site: SiteSpec = {
     schemaVersion: 1,

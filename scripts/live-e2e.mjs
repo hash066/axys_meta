@@ -57,11 +57,11 @@ const input = {
   facts: {
     business: "Clay & Co",
     offer: "Weekend studio sale",
-    collection: "Saturday 7 November 2026, 10am-4pm",
+    collection: "Saturday, Nov 7, 10am to 4pm ET",
     contact: "https://example.com/clayandco",
     confirmed: true,
     source: "merchant",
-    products: [{ id: crypto.randomUUID(), name: PRODUCT, priceMinor: 12900, currency: "INR", assetId }],
+    products: [{ id: crypto.randomUUID(), name: PRODUCT, priceMinor: Number(process.env.PRICE_MINOR ?? 12900), currency: process.env.CURRENCY ?? "USD", assetId }],
   },
   mode: "Both",
   layout: "editorial",
@@ -83,7 +83,7 @@ record("enrich: SAM 3.1 + Muse Image + Spark fidelity", {
   warnings: e?.warnings,
 });
 
-const gen = await call("POST", `/api/v1/campaigns/${id}/generate`, { mode: "muse" });
+const gen = await call("POST", `/api/v1/campaigns/${id}/generate`, { mode: "muse", audio: false });
 let c;
 for (let i = 0; i < 120; i++) {
   c = data(await call("GET", `/api/v1/campaigns/${id}`));
@@ -105,10 +105,10 @@ record("preflight (clean)", { ok: pf1?.ok, issues: pf1?.issues, model: pf1?.mode
 
 // The demo moment: change the price after generation WITHOUT regenerating.
 const edited = { ...input, facts: structuredClone(input.facts), revision: c.revision };
-edited.facts.products[0].priceMinor = 14900;
+edited.facts.products[0].priceMinor = Number(process.env.STALE_MINOR ?? 14900);
 edited.facts.products[0].id = c.facts.products[0].id;
 const put = await call("PUT", `/api/v1/campaigns/${id}?keepGenerated=true`, edited);
-record("edit price INR 129 -> 149 (keepGenerated)", { status: put.status });
+record("edit price after generation (keepGenerated)", { status: put.status });
 const pf2 = data(await call("POST", `/api/v1/campaigns/${id}/preflight`, {}));
 record("preflight (stale price)", {
   ok: pf2?.ok,

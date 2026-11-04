@@ -1,5 +1,5 @@
 import type { Campaign } from "../campaign/index.ts";
-import { hash } from "../campaign/index.ts";
+import { formatMoney, hash } from "../campaign/index.ts";
 import type { Store } from "../../server/store.ts";
 import type { MuseGateway } from "./gateway.ts";
 import { consumeCall } from "./budget.ts";
@@ -455,7 +455,7 @@ function mentioned(c: Campaign, index: number, textWords: Set<string>) {
 /* ------------------------------------------------------------ formatting */
 
 export const money = (currency: string, minor: number) =>
-  `${currency} ${(minor / 100).toFixed(2)}`;
+  formatMoney(currency, minor);
 const showDay = (day: string) =>
   new Date(day + "T00:00:00Z").toLocaleDateString("en-GB", {
     weekday: "short",
@@ -735,9 +735,9 @@ function justify(
   );
   if (priced.length)
     for (const money_ of parsePrices(text))
-      if (!allowed.has(money_.currency)) {
+      if (!(allowed as Set<string>).has(money_.currency)) {
         problems.push(
-          `You mentioned ${money_.currency}, but this campaign prices in ${[...allowed].join("/")}. I cannot change the currency.`,
+          `You mentioned ${money_.currency === "OTHER" ? money_.raw : money_.currency}, but this campaign prices in ${[...allowed].join("/")}. I cannot change the currency.`,
         );
         break;
       }

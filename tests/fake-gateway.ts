@@ -1,6 +1,26 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import sharp from "sharp";
+import { spawnSync } from "node:child_process";
+
+let mp3Cache: Buffer | undefined;
+/** A tiny real mp3 (a 1.5 s tone), synthesised once with ffmpeg. Never a network call. */
+export function tinyMp3() {
+  if (!mp3Cache) {
+    const r = spawnSync(
+      process.env.FFMPEG_PATH || "ffmpeg",
+      [
+        "-v", "error", "-f", "lavfi", "-i", "sine=f=220:d=1.5:r=44100",
+        "-ac", "1", "-c:a", "libmp3lame", "-b:a", "48k", "-f", "mp3", "pipe:1",
+      ],
+      { maxBuffer: 1 << 24 },
+    );
+    if (r.status !== 0 || !r.stdout?.length)
+      throw new Error("fake gateway could not synthesise an mp3");
+    mp3Cache = Buffer.from(r.stdout);
+  }
+  return mp3Cache;
+}
 
 /** Local stand-in for the Muse gateway. Never talks to api.meta.ai. */
 export async function png(
@@ -32,6 +52,10 @@ export type FakeOptions = {
   direction?: unknown | ((body: any) => unknown);
   failDirection?: boolean;
   failSegmentMulti?: boolean;
+  /** Reply to the Muse Wonder narration call: a text, or a function of the request body. */
+  narration?: string | ((body: any) => unknown);
+  /** /v1/speak answers with this HTTP status instead of audio (for example 402 = credits short). */
+  failSpeak?: number;
 };
 
 /** A well-formed direction as Muse Spark would return it. */
@@ -56,6 +80,8 @@ export async function startFakeGateway(options: FakeOptions = {}) {
     fields?: Record<string, string>;
   }[] = [];
   const state = { ...options };
+  /** (voice|text) pairs already voiced: the real gateway serves those from its clip cache for free. */
+  const voiced = new Set<string>();
   const cutout = (await png()).toString("base64");
   const overlay = (await png("#2233cc", 400, 400, false)).toString("base64");
   const server = http.createServer((req, res) => {
@@ -81,6 +107,22 @@ export async function startFakeGateway(options: FakeOptions = {}) {
         });
       if (state.keyConfigured === false)
         return send(503, { error: "MODEL_API_KEY is not configured" });
+      if (route === "/v1/speak") {
+        const body = JSON.parse(raw.toString("utf8"));
+        calls.push({ route, body });
+        if (state.failSpeak)
+          return send(state.failSpeak, { error: "Not enough ElevenLabs credits left (fake)" });
+        const key = `${body.voice}|${body.text}`;
+        const cached = voiced.has(key);
+        voiced.add(key);
+        return send(200, {
+          audio_mp3_b64: tinyMp3().toString("base64"),
+          cached,
+          credits_charged: cached ? 0 : String(body.text).length * 0.5,
+          voice_id: "fakevoice0000000000",
+          model: "eleven_flash_v2_5",
+        });
+      }
       if (route === "/v1/transcribe") {
         calls.push({ route, body: { bytes: raw.length } });
         return send(200, { transcript: state.transcript ?? "hello world" });
@@ -149,6 +191,17 @@ export async function startFakeGateway(options: FakeOptions = {}) {
             model: "muse-spark-1.3",
           });
         }
+        if (
+          state.narration !== undefined &&
+          String(body.prompt).startsWith("You write the voice-over")
+        )
+          return send(200, {
+            json:
+              typeof state.narration === "function"
+                ? (state.narration as (b: any) => object)(body)
+                : { text: state.narration },
+            model: "muse-wonder-1.0",
+          });
         if (state.failJson)
           return send(502, { error: "model output was not JSON" });
         return send(200, {

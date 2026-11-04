@@ -74,14 +74,27 @@ const LabGuess = z
   .strict();
 const LabPhrase = z.object({ text: z.string().max(60) }).strict();
 import { Credits } from "./credits.ts";
+import {
+  SAMPLE_PRESET,
+  sampleInstagramRecord,
+  sampleWebsiteRows,
+} from "./sample-insights.ts";
 export function createApp(
   store = new Store(),
-  options: { gateway?: MuseGateway; now?: () => number } = {},
+  options: {
+    gateway?: MuseGateway;
+    now?: () => number;
+    /** Narrate + add a music bed to generated reels (the server entry point enables it). */
+    narrate?: boolean;
+  } = {},
 ) {
   const app = express(),
     engine = new Engine(store),
     credits = new Credits(store);
   if (options.gateway) engine.gateway = options.gateway;
+  engine.narrate = options.narrate ?? false;
+  /** Demo-only sample insights (clearly labelled, never Instagram data). Read per request. */
+  const demoSamples = () => process.env.AXYS_DEMO_SAMPLES === "true";
   const gateway = () => engine.gateway;
   const clock = () => (options.now ? options.now() : Date.now());
   /** New Meta routes answer `{data: X}` like the rest of the API and also
@@ -477,6 +490,7 @@ export function createApp(
           .list<Connection>("connection", res.locals.tenant)
           .map(({ token, ...c }) => c),
         local: !production,
+        demoSamples: demoSamples(),
         credits: credits.seed(res.locals.tenant),
       },
     });
@@ -671,6 +685,7 @@ export function createApp(
     const c = engine.get(res.locals.tenant, req.params.id);
     if (c.state === "Publishing") throw new Error("Publication is in progress");
     const mode = z.enum(["manual", "muse", "nemotron"]).parse(req.body.mode);
+    const audio = z.boolean().optional().parse(req.body.audio);
     if (c.state === "Generating") return res.json({ data: c });
     if (c.site) {
       store.put("history", c.tenantId, `${c.id}-${c.revision}`, c);
@@ -684,6 +699,10 @@ export function createApp(
       delete c.attempt;
       delete c.generation;
     }
+    store.put("generate-options", c.tenantId, c.id, {
+      revision: c.revision,
+      audio: audio !== false,
+    });
     credits.seed(c.tenantId);
     credits.charge(c.tenantId, c.mode, `generation:${c.id}:${c.revision}`);
     c.state = "Generating";
@@ -924,24 +943,44 @@ export function createApp(
     res.json({ data: { refreshed: true } });
   });
   function metrics(c: Campaign) {
-    return {
-      instagram: store.get<any>("metrics", c.tenantId, c.id) || {
-        source: "Instagram",
-        value: null,
-        reason: "Not retrieved or unavailable",
-        observedAt: null,
-      },
-      website: store.db
-        .prepare(
-          "SELECT kind,COUNT(*) AS value,MAX(time) AS observedAt FROM events WHERE site=? GROUP BY kind",
-        )
-        .all(c.id),
+    const real = store.get<any>("metrics", c.tenantId, c.id);
+    // Real Instagram insights always win; sample insights exist only in demo mode
+    // and live in their own record, so real storage semantics are untouched.
+    const sample =
+      demoSamples() && !real?.data
+        ? store.get<any>("metrics-sample", c.tenantId, c.id)
+        : undefined;
+    const base = {
+      instagram: sample ||
+        real || {
+          source: "Instagram",
+          value: null,
+          reason: "Not retrieved or unavailable",
+          observedAt: null,
+        },
+      website: sample
+        ? sampleWebsiteRows(new Date(sample.observedAt))
+        : store.db
+            .prepare(
+              "SELECT kind,COUNT(*) AS value,MAX(time) AS observedAt FROM events WHERE site=? GROUP BY kind",
+            )
+            .all(c.id),
       note: "Visits and contact clicks are not purchases. Automated traffic may be included.",
     };
+    return sample ? { ...base, sample: true as const } : base;
   }
   app.get("/api/v1/campaigns/:id/metrics", (req, res) =>
     res.json({ data: metrics(engine.get(res.locals.tenant, req.params.id)) }),
   );
+  app.post("/api/v1/campaigns/:id/metrics/sample", (req, res) => {
+    if (!demoSamples()) return res.sendStatus(404);
+    const c = engine.get(res.locals.tenant, req.params.id);
+    z.object({ preset: z.literal(SAMPLE_PRESET) })
+      .strict()
+      .parse(req.body);
+    store.put("metrics-sample", c.tenantId, c.id, sampleInstagramRecord(new Date(clock())));
+    res.json({ data: metrics(c) });
+  });
   app.post("/api/v1/campaigns/:id/metrics", async (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
     if (!c.attempt?.mediaId)
@@ -1003,7 +1042,14 @@ export function createApp(
   });
   app.post("/api/v1/campaigns/:id/revision", async (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
-    const result = await proposeRevision(c, store, metrics(c), engine.gateway);
+    const observed = metrics(c);
+    const result = await proposeRevision(
+      c,
+      store,
+      observed,
+      engine.gateway,
+      "sample" in observed && observed.sample === true,
+    );
     store.put("proposal", c.tenantId, c.id, result);
     res.json({ data: result });
   });

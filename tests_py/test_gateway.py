@@ -76,3 +76,26 @@ def test_segment_multi_validates_input(monkeypatch):
     assert client.post("/v1/segment_multi", files=files, data={"concepts": "[]"}).status_code == 400
     r = client.post("/v1/segment_multi", files=files, data={"concepts": '["cake", "raspberries"]'})
     assert r.status_code == 503
+
+
+def test_speak_validates_and_reports_missing_key(monkeypatch):
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    assert client.post("/v1/speak", json={"text": ""}).status_code == 422
+    assert client.post("/v1/speak", json={"text": "x" * 401}).status_code == 422
+    assert client.post("/v1/speak", json={"text": "hi there", "model": "not-a-model"}).status_code == 422
+    r = client.post("/v1/speak", json={"text": "Hello there."})
+    assert r.status_code == 503 and "ELEVENLABS_API_KEY" in r.json()["error"]
+    assert client.get("/v1/speak/budget").status_code == 503
+
+
+def test_speak_uses_cache_without_a_key(monkeypatch, tmp_path):
+    from gateway import speech
+
+    monkeypatch.setattr(speech, "CACHE", tmp_path)
+    monkeypatch.setattr(speech, "voice_id", lambda name: "V" * 20)
+    import hashlib
+
+    digest = hashlib.sha256(f"{'V' * 20}|{speech.DEFAULT_MODEL}|Cached line.".encode()).hexdigest()[:32]
+    (tmp_path / f"{digest}.mp3").write_bytes(b"ID3fake")
+    r = client.post("/v1/speak", json={"text": "Cached   line."})
+    assert r.status_code == 200 and r.json()["cached"] is True and r.json()["credits_charged"] == 0
