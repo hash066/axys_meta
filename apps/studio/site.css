@@ -24,7 +24,8 @@
   padding: 45px 0;
   max-width: 650px;
 }
-.site-hero > p:first-child {
+.site-hero > p:first-child,
+.site-hero-copy > p:first-child {
   font:
     9px Arial,
     sans-serif;
@@ -133,5 +134,88 @@
   }
   .merchant-site header a {
     font-size: 10px;
+  }
+}
+
+/* Hero with a product image: two-column on desktop, stacked on phones. */
+.site-hero.has-media {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: center;
+  gap: 48px;
+  max-width: none;
+  padding: 56px 0 48px;
+}
+.site-hero-copy p:nth-of-type(2),
+.site-hero-copy p:nth-of-type(3) {
+  max-width: 46ch;
+  line-height: 1.6;
+}
+.site-hero.has-media .site-cta {
+  margin-top: 22px;
+  border-radius: 999px;
+  padding: 14px 24px;
+  background: #3d3427;
+  color: #fbf5e9;
+  border-color: #3d3427;
+}
+.catalog .site-hero.has-media .site-cta {
+  background: #263e31;
+  color: #eef1e8;
+  border-color: #263e31;
+}
+.minimal .site-hero.has-media .site-cta {
+  background: #252525;
+  color: #fff;
+  border-color: #252525;
+}
+.site-hero-media {
+  display: block;
+  width: min(360px, 80%);
+  height: auto;
+  margin: 24px auto 0;
+  border-radius: 16px;
+  object-fit: contain;
+}
+.has-media .site-hero-media {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  margin: 0 auto;
+  justify-self: center;
+  border-radius: 28px;
+  box-shadow:
+    0 2px 6px rgba(61, 52, 39, 0.1),
+    0 28px 60px -24px rgba(61, 52, 39, 0.45);
+}
+.has-media .site-hero-media[data-kind="cutout"] {
+  padding: 8%;
+  background:
+    radial-gradient(
+      ellipse at 50% 40%,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0) 70%
+    ),
+    linear-gradient(160deg, #f1e6d2 0%, #e4d4b8 100%);
+  box-sizing: border-box;
+}
+.has-media .site-hero-media[data-kind="scene"] {
+  object-fit: cover;
+}
+@media (max-width: 760px) {
+  .site-hero.has-media {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 32px 0 40px;
+  }
+  .site-hero.has-media .site-hero-media {
+    order: -1;
+    max-width: 100%;
+    border-radius: 22px;
+  }
+  .site-hero.has-media .site-cta {
+    display: block;
+    text-align: center;
   }
 }

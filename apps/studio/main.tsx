@@ -2,6 +2,13 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { Campaign, Input } from "../../packages/campaign/index";
 import { Site } from "../../packages/renderers/Site";
+import {
+  MetaLens,
+  PreflightPanel,
+  VoiceRecorder,
+  blockCount,
+  type PreflightState,
+} from "./meta";
 import "./style.css";
 import "./site.css";
 async function api(
@@ -110,7 +117,7 @@ function Landing() {
           <a href="#system">How it works</a>
           <a href="#evidence">Evidence</a>
         </nav>
-        <a className="nav-cta" href="/app">
+        <a className="nav-cta" href="/?studio=1">
           Open Studio
         </a>
       </header>
@@ -119,7 +126,7 @@ function Landing() {
         <section className="marketing-hero">
           <div className="hero-copy">
             <p className="hero-kicker">
-              NVIDIA Nemotron <span>×</span> Nebius Token Factory
+              Meta Muse <span>×</span> Model API
             </p>
             <h1>One campaign. Built once. Ready everywhere.</h1>
             <p className="hero-lead">
@@ -128,7 +135,7 @@ function Landing() {
               measurable next move.
             </p>
             <div className="hero-actions">
-              <a className="hero-primary" href="/app">
+              <a className="hero-primary" href="/?studio=1">
                 Start building
               </a>
               <a
@@ -158,7 +165,7 @@ function Landing() {
                 <div className="system-route">
                   <span>Brief</span>
                   <i />
-                  <span>Nemotron plan</span>
+                  <span>Muse plan</span>
                   <i />
                   <span>Approved outputs</span>
                 </div>
@@ -175,7 +182,7 @@ function Landing() {
                   </article>
                 </div>
                 <div className="trace-row">
-                  <span>NVIDIA Nemotron 3.5 Lightning</span>
+                  <span>Muse Wonder 1.0</span>
                   <span>Facts checked</span>
                   <span>Human approval</span>
                 </div>
@@ -204,7 +211,7 @@ function Landing() {
                 <span className="feature-index">01</span>
                 <h3>Describe it naturally</h3>
                 <p>
-                  Start with WhatsApp text, photos or Studio. Nemotron extracts
+                  Start with WhatsApp text, photos or Studio. Muse extracts
                   a typed brief and asks for missing facts without inventing
                   prices or promises.
                 </p>
@@ -255,8 +262,8 @@ function Landing() {
             <li>
               <span>02</span>
               <div>
-                <strong>Plan with Nemotron</strong>
-                <p>Nebius runs the bounded structured campaign decision.</p>
+                <strong>Plan with Muse Wonder</strong>
+                <p>Muse Wonder makes the bounded, structured campaign decision.</p>
               </div>
             </li>
             <li>
@@ -308,7 +315,7 @@ function Landing() {
           <p className="section-label">START A CAMPAIGN</p>
           <h2>Your offer should move as one system.</h2>
           <div className="hero-actions">
-            <a className="hero-primary" href="/app">
+            <a className="hero-primary" href="/?studio=1">
               Open Axys Studio
             </a>
             <a
@@ -327,7 +334,7 @@ function Landing() {
           axys<span>●</span>
         </a>
         <p>Campaign intelligence for small businesses.</p>
-        <span>NVIDIA Nemotron · Nebius Token Factory</span>
+        <span>Meta Muse · Meta Model API</span>
       </footer>
     </div>
   );
@@ -360,7 +367,8 @@ function StudioApp() {
     [crmSummary, setCrmSummary] = useState<CrmSummary>(),
     [leadLabel, setLeadLabel] = useState(""),
     [leadConsent, setLeadConsent] = useState(false),
-    [leadActions, setLeadActions] = useState<Record<string, LeadAction>>({});
+    [leadActions, setLeadActions] = useState<Record<string, LeadAction>>({}),
+    [preflight, setPreflight] = useState<PreflightState>();
   const run = async (label: string, fn: () => Promise<void>) => {
     setBusy(label);
     setError("");
@@ -487,6 +495,7 @@ function StudioApp() {
     });
     setApprovalDigest(d.digest);
   }
+  const preflightBlocked = !!c && blockCount(preflight, c) > 0;
   const campaignLeads =
     c && leads
       ? leads.filter((lead) => !lead.campaignId || lead.campaignId === c.id)
@@ -795,6 +804,18 @@ function StudioApp() {
                     placeholder="Describe your campaign in your own words. Include only facts you can confirm."
                   />
                 </label>
+                <VoiceRecorder
+                  disabled={!!busy}
+                  onTranscript={(text) =>
+                    setForm((f) => ({
+                      ...f,
+                      brief: f.brief.trim()
+                        ? `${f.brief.trim()}
+${text}`
+                        : text,
+                    }))
+                  }
+                />
                 <label>
                   Voice recording (optional, up to 3 minutes)
                   <input
@@ -826,9 +847,9 @@ function StudioApp() {
                   <audio controls src={`/api/v1/assets/${form.voiceAssetId}`} />
                 )}
                 <p className="muted">
-                  Upload only your own or permitted recording. Paste a corrected
-                  transcript above; automatic NVIDIA transcription awaits a
-                  verified speech deployment.
+                  Upload only your own or permitted recording. An uploaded file
+                  is kept as an attachment; use the recorder above to transcribe
+                  speech into the brief.
                 </p>
                 {whatsappDrafts.length > 0 && (
                   <label>
@@ -1128,17 +1149,18 @@ function StudioApp() {
                     </p>
                   </section>
                 </div>
+                <MetaLens campaign={c} />
                 <div className="panel connection">
                   <div>
                     <h2>Campaign intelligence</h2>
                     <p>
-                      {caps.nebius
-                        ? "Nemotron through Nebius is configured; verified credit limits are checked before each request."
-                        : "Nemotron is not connected. Configure existing Nebius access and verified credit limits to use AI planning."}
+                      {caps.muse?.available
+                        ? "Muse models are reachable through the Meta Model API gateway; a per-campaign call cap applies."
+                        : "Muse gateway is not reachable or has no key. Start the gateway and set MODEL_API_KEY to use AI planning."}
                     </p>
                   </div>
                   <span className="pill">
-                    {caps.nebius ? "Ready" : "Access needed"}
+                    {caps.muse?.available ? "Ready" : "Access needed"}
                   </span>
                 </div>
                 <div className="action-row">
@@ -1177,13 +1199,13 @@ function StudioApp() {
                   </button>
                   <button
                     disabled={
-                      !!busy || !caps.nebius || c.state === "Generating"
+                      !!busy || !caps.muse?.available || c.state === "Generating"
                     }
                     onClick={() =>
-                      run("Planning with Nemotron", async () => {
+                      run("Planning with Muse Wonder", async () => {
                         setC(
                           await api(`/campaigns/${c.id}/generate`, {
-                            mode: "nemotron",
+                            mode: "muse",
                           }),
                         );
                         setCaps(await api("/capabilities"));
@@ -1191,7 +1213,7 @@ function StudioApp() {
                       })
                     }
                   >
-                    Plan with Nemotron →
+                    Plan with Muse Wonder →
                   </button>
                 </div>
                 <p className="muted">
@@ -1277,6 +1299,7 @@ function StudioApp() {
                     </button>
                   </section>
                 </div>
+                <MetaLens campaign={c} />
               </>
             ) : (
               <Empty
@@ -1368,6 +1391,11 @@ function StudioApp() {
                     </p>
                   </section>
                 </div>
+                <PreflightPanel
+                  campaign={c}
+                  state={preflight}
+                  onResult={setPreflight}
+                />
                 <section className="panel">
                   <h2>Approve this exact version</h2>
                   <p>
@@ -1399,9 +1427,22 @@ function StudioApp() {
                     >
                       Prepare exact-version review
                     </button>
-                    {approvalDigest && (
+                    {preflightBlocked && (
+                      <p className="approve-block" id="approve-block-reason">
+                        Approval is disabled: preflight found{" "}
+                        {blockCount(preflight, c)} blocking issue
+                        {blockCount(preflight, c) > 1 ? "s" : ""}. Fix the facts
+                        or outputs, then re-run preflight above.
+                      </p>
+                    )}
+                    {(approvalDigest || preflightBlocked) && (
                       <button
+                        aria-disabled={preflightBlocked || undefined}
+                        aria-describedby={
+                          preflightBlocked ? "approve-block-reason" : undefined
+                        }
                         onClick={() =>
+                          !preflightBlocked &&
                           run("Approving version", async () =>
                             setC(
                               await api(`/campaigns/${c.id}/approve`, {
@@ -1811,11 +1852,11 @@ function StudioApp() {
                 <section className="panel">
                   <h2>What should change next?</h2>
                   <p>
-                    Nemotron proposes a revision grounded in the available
+                    Muse Wonder proposes a revision grounded in the available
                     observations. You review and approve any new campaign.
                   </p>
                   <button
-                    disabled={!caps.nebius || !!busy}
+                    disabled={!caps.muse?.available || !!busy}
                     onClick={() =>
                       run("Reviewing observations", async () =>
                         setProposal(
@@ -1839,9 +1880,9 @@ function StudioApp() {
         <footer className="studio-footer">
           Axys · One campaign, connected surfaces.
           <span>
-            {caps.nebius
-              ? "NVIDIA Nemotron / Nebius configured"
-              : "NVIDIA Nemotron / Nebius access pending"}
+            {caps.muse?.available
+              ? "Meta Muse gateway connected"
+              : "Meta Muse gateway not connected"}
           </span>
         </footer>
       </main>
@@ -1859,6 +1900,12 @@ function Empty({ text, action }: { text: string; action: () => void }) {
   );
 }
 function App() {
-  return window.location.pathname === "/" ? <Landing /> : <StudioApp />;
+  const q = new URLSearchParams(window.location.search);
+  const studio = q.has("studio") || q.has("fixture");
+  return window.location.pathname === "/" && !studio ? (
+    <Landing />
+  ) : (
+    <StudioApp />
+  );
 }
 createRoot(document.getElementById("root")!).render(<App />);

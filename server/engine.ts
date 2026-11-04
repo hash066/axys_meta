@@ -13,7 +13,10 @@ import {
 } from "../packages/campaign/index.ts";
 import { readFileSync } from "node:fs";
 import { command, renderReel } from "../packages/renderers/reel.ts";
-import { propose } from "../packages/inference/nebius.ts";
+import { propose } from "../packages/inference/meta.ts";
+import { MuseGateway } from "../packages/meta/gateway.ts";
+import { usableMedia } from "../packages/meta/enrichment.ts";
+import { assertPreflightClear } from "../packages/meta/preflight.ts";
 import { Meta, type Connection } from "../services/publishing/meta.ts";
 import {
   hasVideoWorker,
@@ -52,6 +55,7 @@ export class Engine {
       });
     },
     public videoQueue = new VideoQueue(store),
+    public gateway: MuseGateway = new MuseGateway(),
   ) {}
   get(tenant: string, id: string) {
     const c = this.store.get<Campaign>("campaign", tenant, id);
@@ -184,6 +188,7 @@ export class Engine {
       );
   }
   approval(c: Campaign, accountId: string, schedule: string, expected: string) {
+    if (c.site && c.reel) assertPreflightClear(this.store, c);
     assertConsistent(c);
     const due = Date.parse(schedule);
     if (!Number.isFinite(due) || due > Date.now() + 30 * 86400000)
@@ -304,7 +309,7 @@ export class Engine {
     let headline = c.facts.offer;
     const alreadyPlanned = c.generation?.revision === c.revision;
     if (ai && !alreadyPlanned) {
-      const result = await propose(c, this.store);
+      const result = await propose(c, this.store, [], this.gateway);
       c.trace = result.trace;
       if (
         result.proposal.questions.length ||
@@ -337,7 +342,7 @@ export class Engine {
       headline = result.proposal.headline;
     }
     if (!alreadyPlanned) {
-      const next = specs(c, headline);
+      const next = specs(c, headline, usableMedia(this.store, c).hero);
       c.site = next.site;
       c.reel = next.reel;
       c.siteHash = hash(c.site);
@@ -438,6 +443,9 @@ export class Engine {
           },
         };
       }
+      const cutouts = new Map<string, Buffer>();
+      for (const [productId, assetId] of usableMedia(this.store, c).cutouts)
+        cutouts.set(productId, await this.bytes(c.tenantId, assetId));
       const rendered = await renderReel(
         c.reel,
         path.join(
@@ -449,6 +457,7 @@ export class Engine {
         ),
         (id) => this.bytes(c.tenantId, id),
         generatedClips,
+        cutouts,
       );
       const a = await this.asset(c.tenantId, rendered.bytes, "video/mp4");
       c.videoPosterId = (

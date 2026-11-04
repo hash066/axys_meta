@@ -52,85 +52,40 @@ export function isPublicHttpsOrigin(raw: string) {
   }
 }
 
-export function nebiusChecks(env: NodeJS.ProcessEnv = process.env): Check[] {
-  const names = [
-    "NEBIUS_API_KEY",
-    "NEBIUS_MODEL",
-    "NEBIUS_CREDIT_VERIFIED_AT",
-    "NEBIUS_PRICING_SOURCE",
-    "NEBIUS_INPUT_USD_PER_MILLION",
-    "NEBIUS_OUTPUT_USD_PER_MILLION",
-    "NEBIUS_CREDIT_USD",
-    "NEBIUS_ACCOUNT_CAP_USD",
-    "NEBIUS_CAMPAIGN_CAP_USD",
-  ];
-  const missing = names.filter((name) => !value(env, name));
-  const checks: Check[] = [
+/**
+ * Muse gateway configuration. Everything is optional: with no variables the
+ * app boots and AI features report `available: false` instead of failing.
+ * The model API key lives only in the gateway process, never here.
+ */
+export function museChecks(env: NodeJS.ProcessEnv = process.env): Check[] {
+  const raw = value(env, "MUSE_GATEWAY_URL");
+  if (!raw)
+    return [
+      {
+        name: "muse.gateway-url",
+        status: "pass",
+        detail: "Using the default gateway http://127.0.0.1:8766.",
+      },
+    ];
+  let valid = false;
+  try {
+    const url = new URL(raw);
+    valid =
+      ["http:", "https:"].includes(url.protocol) &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash;
+  } catch {}
+  return [
     {
-      name: "nebius.configuration",
-      status: missing.length ? "blocked" : "pass",
-      detail: missing.length
-        ? `Missing ${missing.join(", ")}`
-        : "All required values are present; secrets were not displayed.",
+      name: "muse.gateway-url",
+      status: valid ? "pass" : "blocked",
+      detail: valid
+        ? "MUSE_GATEWAY_URL is an http(s) URL."
+        : "MUSE_GATEWAY_URL must be an http(s) URL without credentials, query or fragment.",
     },
   ];
-  if (missing.length) return checks;
-  const model = value(env, "NEBIUS_MODEL");
-  checks.push({
-    name: "nebius.model",
-    status: /^nvidia\/.*nemotron/i.test(model) ? "pass" : "blocked",
-    detail: /^nvidia\/.*nemotron/i.test(model)
-      ? `Pinned NVIDIA model: ${model}`
-      : "NEBIUS_MODEL must be an exact NVIDIA Nemotron catalog ID.",
-  });
-  const verified = Date.parse(value(env, "NEBIUS_CREDIT_VERIFIED_AT"));
-  const age = Date.now() - verified;
-  checks.push({
-    name: "nebius.credit-freshness",
-    status:
-      Number.isFinite(verified) && age >= 0 && age <= 24 * 60 * 60 * 1000
-        ? "pass"
-        : "blocked",
-    detail:
-      Number.isFinite(verified) && age >= 0 && age <= 24 * 60 * 60 * 1000
-        ? "Credit was verified within the last 24 hours."
-        : "Re-check available credit now; verification must be no more than 24 hours old.",
-  });
-  let pricingValid = false;
-  try {
-    pricingValid =
-      new URL(value(env, "NEBIUS_PRICING_SOURCE")).protocol === "https:";
-  } catch {}
-  checks.push({
-    name: "nebius.pricing-source",
-    status: pricingValid ? "pass" : "blocked",
-    detail: pricingValid
-      ? "Pricing provenance is an HTTPS URL."
-      : "NEBIUS_PRICING_SOURCE must be the current official HTTPS pricing page.",
-  });
-  const numeric = [
-    "NEBIUS_INPUT_USD_PER_MILLION",
-    "NEBIUS_OUTPUT_USD_PER_MILLION",
-    "NEBIUS_CREDIT_USD",
-    "NEBIUS_ACCOUNT_CAP_USD",
-    "NEBIUS_CAMPAIGN_CAP_USD",
-  ].map((name) => [name, Number(value(env, name))] as const);
-  const bad = numeric.filter(([, n]) => !Number.isFinite(n) || n <= 0);
-  const values = Object.fromEntries(numeric) as Record<string, number>;
-  const bounded =
-    !bad.length &&
-    values.NEBIUS_ACCOUNT_CAP_USD <= values.NEBIUS_CREDIT_USD &&
-    values.NEBIUS_CAMPAIGN_CAP_USD <= values.NEBIUS_ACCOUNT_CAP_USD;
-  checks.push({
-    name: "nebius.budget",
-    status: bounded ? "pass" : "blocked",
-    detail: bounded
-      ? "Positive rates and nested campaign/account/credit caps are configured."
-      : bad.length
-        ? `Invalid positive numbers: ${bad.map(([name]) => name).join(", ")}`
-        : "Require campaign cap <= account cap <= currently verified credit.",
-  });
-  return checks;
 }
 
 export function metaChecks(env: NodeJS.ProcessEnv = process.env): Check[] {

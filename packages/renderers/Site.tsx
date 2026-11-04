@@ -11,25 +11,40 @@ export function Site({
   assetUrl?: (id: string) => string;
   contactUrl?: string;
 }) {
+  const copy = (
+    <>
+      <p>MADE FOR YOUR MOMENTS</p>
+      <h1>{spec.headline}</h1>
+      {spec.facts.message && <p>{spec.facts.message}</p>}
+      <p>{spec.facts.collection}</p>
+      <a
+        className="site-cta"
+        href={contactUrl || spec.facts.contact}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Enquire about this offer ↗
+      </a>
+    </>
+  );
   return (
     <main className={`merchant-site ${spec.layout}`}>
       <header>
         <span>{spec.facts.business}</span>
         <a href="#collection">Explore collection</a>
       </header>
-      <section className="site-hero">
-        <p>MADE FOR YOUR MOMENTS</p>
-        <h1>{spec.headline}</h1>
-        {spec.facts.message && <p>{spec.facts.message}</p>}
-        <p>{spec.facts.collection}</p>
-        <a
-          className="site-cta"
-          href={contactUrl || spec.facts.contact}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Enquire about this offer ↗
-        </a>
+      <section className={spec.hero ? "site-hero has-media" : "site-hero"}>
+        {spec.hero ? <div className="site-hero-copy">{copy}</div> : copy}
+        {spec.hero && (
+          <img
+            className="site-hero-media"
+            data-kind={spec.hero.kind}
+            src={assetUrl(spec.hero.assetId)}
+            alt={spec.hero.alt}
+            width={360}
+            height={360}
+          />
+        )}
       </section>
       <section className="products" id="collection">
         {spec.facts.products.map((p) => (

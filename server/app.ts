@@ -34,14 +34,33 @@ import {
 import type { WhatsAppDecision } from "./whatsapp-approval.ts";
 import { ingestWhatsApp, type WhatsAppDraft } from "./whatsapp.ts";
 import { hermesCommand } from "./hermes.ts";
-import { propose } from "../packages/inference/nebius.ts";
-import { nebiusChecks } from "../services/providers/config.ts";
+import { propose } from "../packages/inference/meta.ts";
+import {
+  GatewayError,
+  MuseGateway,
+  museStatus,
+} from "../packages/meta/gateway.ts";
+import { enrichCampaign, loadEnrichment } from "../packages/meta/enrichment.ts";
+import {
+  PreflightBlockedError,
+  latestPreflight,
+  runPreflight,
+} from "../packages/meta/preflight.ts";
 import { installCrmRoutes } from "./crm.ts";
 import { Credits } from "./credits.ts";
-export function createApp(store = new Store()) {
+export function createApp(
+  store = new Store(),
+  options: { gateway?: MuseGateway } = {},
+) {
   const app = express(),
     engine = new Engine(store),
     credits = new Credits(store);
+  if (options.gateway) engine.gateway = options.gateway;
+  const gateway = () => engine.gateway;
+  /** New Meta routes answer `{data: X}` like the rest of the API and also
+   * expose X's fields at the top level, matching docs/META_CONTRACT.md. */
+  const reply = (res: express.Response, body: object, status = 200) =>
+    res.status(status).json({ data: body, ...body });
   const origin = process.env.AXYS_ORIGIN || "http://127.0.0.1:4310";
   const production = process.env.NODE_ENV === "production";
   app.disable("x-powered-by");
@@ -154,13 +173,36 @@ export function createApp(store = new Store()) {
       res.json(result);
     },
   );
-  app.use(["/api/v1/assets", "/api/v1/audio"], (req, res, next) => {
-    if (!sessions(req))
-      return res.status(401).json({
-        error: { code: "auth", message: "Sign in before uploading media" },
-      });
-    next();
+  app.use(
+    ["/api/v1/assets", "/api/v1/audio", "/api/v1/voice"],
+    (req, res, next) => {
+      if (!sessions(req))
+        return res.status(401).json({
+          error: { code: "auth", message: "Sign in before uploading media" },
+        });
+      next();
+    },
+  );
+  // Spend-bearing Muse routes get a tighter per-IP limit than the global one.
+  const museLimit = rateLimit({
+    windowMs: 60000,
+    limit: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
   });
+  app.use(
+    ["/api/v1/voice", /^\/api\/v1\/campaigns\/[^/]+\/(enrich|preflight)$/],
+    museLimit,
+  );
+  // 16 kHz mono PCM16, at most 60 s.
+  const MAX_PCM_BYTES = 60 * 16000 * 2;
+  app.post(
+    "/api/v1/voice/transcribe",
+    express.raw({
+      type: ["application/octet-stream", "audio/pcm", "audio/L16"],
+      limit: MAX_PCM_BYTES,
+    }),
+  );
   app.post(
     "/api/v1/audio",
     express.raw({
@@ -180,7 +222,7 @@ export function createApp(store = new Store()) {
     store.db.prepare("SELECT 1").get();
     res.json({ ok: true });
   });
-  app.get("/api/v1/public-config", (_req, res) => {
+  app.get("/api/v1/public-config", async (_req, res) => {
     const number = (process.env.WHATSAPP_PUBLIC_NUMBER || "").replace(
       /\D/g,
       "",
@@ -192,6 +234,7 @@ export function createApp(store = new Store()) {
           : null,
         whatsappReady: Boolean(number),
         hosting: production ? "managed" : "local-development",
+        muse: await museStatus(gateway()),
       },
     });
   });
@@ -344,11 +387,11 @@ export function createApp(store = new Store()) {
       },
     });
   });
-  app.get("/api/v1/capabilities", (_req, res) => {
+  app.get("/api/v1/capabilities", async (_req, res) => {
     res.json({
       data: {
         tenant: res.locals.tenant,
-        nebius: !nebiusChecks().some((check) => check.status === "blocked"),
+        muse: await museStatus(gateway()),
         instagram:
           !!process.env.META_APP_ID &&
           !!process.env.META_APP_SECRET &&
@@ -520,12 +563,26 @@ export function createApp(store = new Store()) {
     const input = CampaignInput.parse(req.body);
     checkAssets(res.locals.tenant, input);
     store.put("history", old.tenantId, `${old.id}-${old.revision}`, old);
+    // Documented stale-price step: `?keepGenerated=true` saves the edit but
+    // keeps the previously generated artifacts so preflight can audit them
+    // against the new confirmed facts. Approval stays refused until regenerated.
+    const keep = req.query.keepGenerated === "true" && !!old.site;
     const c: Campaign = {
       ...input,
       id: old.id,
       tenantId: old.tenantId,
       revision: old.revision + 1,
-      state: "Draft",
+      state: keep ? "NeedsReview" : "Draft",
+      ...(keep
+        ? {
+            site: old.site,
+            reel: old.reel,
+            siteHash: old.siteHash,
+            videoHash: old.videoHash,
+            videoAssetId: old.videoAssetId,
+            videoPosterId: old.videoPosterId,
+          }
+        : {}),
     };
     engine.save(c);
     res.json({ data: c });
@@ -533,7 +590,7 @@ export function createApp(store = new Store()) {
   app.post("/api/v1/campaigns/:id/generate", (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
     if (c.state === "Publishing") throw new Error("Publication is in progress");
-    const mode = z.enum(["manual", "nemotron"]).parse(req.body.mode);
+    const mode = z.enum(["manual", "muse", "nemotron"]).parse(req.body.mode);
     if (c.state === "Generating") return res.json({ data: c });
     if (c.site) {
       store.put("history", c.tenantId, `${c.id}-${c.revision}`, c);
@@ -553,8 +610,62 @@ export function createApp(store = new Store()) {
     delete c.approval;
     delete c.error;
     engine.save(c);
-    engine.enqueue(c, mode === "nemotron" ? "generate-ai" : "generate");
+    engine.enqueue(c, mode === "manual" ? "generate" : "generate-ai");
     res.status(202).json({ data: c });
+  });
+  app.post("/api/v1/voice/transcribe", async (req, res) => {
+    if (!Buffer.isBuffer(req.body) || req.body.length < 3200)
+      throw new Error("Send at least 0.1 s of raw 16 kHz mono PCM16 audio");
+    if (req.body.length % 2)
+      throw new Error("PCM16 audio must have an even byte length");
+    const campaignId = z.string().uuid().optional().parse(req.query.campaignId);
+    const c = campaignId
+      ? engine.get(res.locals.tenant, campaignId)
+      : undefined;
+    const transcript = await gateway().transcribe(req.body);
+    if (c)
+      store.put("voice-transcript", c.tenantId, c.id, {
+        transcript,
+        at: new Date().toISOString(),
+      });
+    reply(res, { transcript });
+  });
+  app.post("/api/v1/campaigns/:id/enrich", async (req, res) => {
+    const c = engine.get(res.locals.tenant, req.params.id);
+    const scenes = z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(2)
+      .default(1)
+      .parse(req.query.scenes);
+    const {
+      sources: _s,
+      revision: _r,
+      ...contract
+    } = await enrichCampaign(engine, gateway(), c, scenes);
+    reply(res, contract);
+  });
+  app.get("/api/v1/campaigns/:id/enrichment", (req, res) => {
+    const c = engine.get(res.locals.tenant, req.params.id);
+    const e = loadEnrichment(store, c);
+    if (!e) throw new Error("Enrichment not found");
+    const { sources: _s, revision: _r, ...contract } = e;
+    reply(res, contract);
+  });
+  app.post("/api/v1/campaigns/:id/preflight", async (req, res) => {
+    const c = engine.get(res.locals.tenant, req.params.id);
+    const body = z
+      .object({ voiceTranscript: z.string().max(6000).optional() })
+      .strict()
+      .parse(req.body ?? {});
+    reply(res, await runPreflight(store, gateway(), c, body.voiceTranscript));
+  });
+  app.get("/api/v1/campaigns/:id/preflight", (req, res) => {
+    const c = engine.get(res.locals.tenant, req.params.id);
+    const p = latestPreflight(store, c);
+    if (!p) throw new Error("Preflight not found");
+    reply(res, { ...p, current: p.revision === c.revision });
   });
   app.post("/api/v1/campaigns/:id/preview-digest", (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
@@ -800,11 +911,13 @@ export function createApp(store = new Store()) {
     if (
       !site?.spec.facts.products.some(
         (p: any) => p.assetId === req.params.assetId,
-      )
+      ) &&
+      site?.spec.hero?.assetId !== req.params.assetId
     )
       return res.sendStatus(404);
+    const asset = store.get<Asset>("asset", site.tenantId, req.params.assetId);
     res
-      .type("image/jpeg")
+      .type(asset?.mime.startsWith("image/") ? asset.mime : "image/jpeg")
       .send(await engine.bytes(site.tenantId, req.params.assetId));
   });
   app.get("/sites/:id", (req, res) => {
@@ -881,6 +994,26 @@ export function createApp(store = new Store()) {
               .map((i) => `${i.path.join(".")}: ${i.message}`)
               .join("; "),
           },
+        });
+      if (err instanceof PreflightBlockedError)
+        return res.status(409).json({
+          error: { code: err.code, message: err.message, issues: err.issues },
+        });
+      if (err instanceof GatewayError)
+        return res
+          .status(
+            ["bad_response", "upstream"].includes(err.code)
+              ? 502
+              : err.code === "bad_request"
+                ? 422
+                : 503,
+          )
+          .json({
+            error: { code: `muse_${err.code}`, message: err.message },
+          });
+      if (err?.type === "entity.too.large")
+        return res.status(413).json({
+          error: { code: "too_large", message: "Upload is too large" },
         });
       const known = err instanceof Error ? err.message : "Request failed";
       const status = known.includes("not found") ? 404 : 409;

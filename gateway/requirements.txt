@@ -1,0 +1,9 @@
+openai
+fastapi
+uvicorn[standard]
+pillow
+websockets
+meta-sam-parser
+python-multipart
+numpy
+pytest

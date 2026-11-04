@@ -65,6 +65,13 @@ export type SiteSpec = {
   facts: Input["facts"];
   layout: Input["layout"];
   headline: string;
+  /** Optional Meta enrichment image shown in the site hero (SAM cutout or Muse Image scene). */
+  hero?: SiteHero;
+};
+export type SiteHero = {
+  assetId: string;
+  kind: "cutout" | "scene";
+  alt: string;
 };
 export type ReelSpec = {
   schemaVersion: 1;
@@ -114,12 +121,13 @@ export function hash(value: unknown) {
 }
 export const price = (p: Input["facts"]["products"][number]) =>
   `${p.currency} ${(p.priceMinor / 100).toFixed(2)}`;
-export function specs(c: Input, headline = c.facts.offer) {
+export function specs(c: Input, headline = c.facts.offer, hero?: SiteHero) {
   const site: SiteSpec = {
     schemaVersion: 1,
     facts: c.facts,
     layout: c.layout,
     headline,
+    ...(hero ? { hero } : {}),
   };
   const caption = `${c.facts.business}\n${c.facts.offer}${c.facts.message ? "\n" + c.facts.message : ""}\n${c.facts.products.map((p) => `${p.name} — ${price(p)}`).join("\n")}\n${c.facts.collection}\n${c.facts.contact}`;
   const reel: ReelSpec = {
