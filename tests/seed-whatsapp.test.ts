@@ -71,7 +71,7 @@ test("scripts/seed-whatsapp-draft.mts seeds a draft the Studio's import flow acc
     assert.equal(r.status, 0, r.stderr);
     const out = JSON.parse(r.stdout);
     assert.equal(out.seeded, true);
-    assert.equal(out.simulated, true);
+    assert.equal(out.sample, true);
     assert.deepEqual(out.media, ["image", "audio"]);
     assert.match(out.draftId, /^[a-f0-9]{64}$/);
 
@@ -99,7 +99,7 @@ test("scripts/seed-whatsapp-draft.mts seeds a draft the Studio's import flow acc
       const d = drafts[0];
       assert.equal(d.source, "whatsapp");
       assert.equal(d.status, "NeedsConfirmation");
-      assert.equal(d.simulated, true);
+      assert.equal(d.sample, true);
       assert.equal(d.brief, TRANSCRIPT);
       assert.equal(d.plan.businessName, "Stride Lane");
       assert.deepEqual(d.media.map((m: any) => [m.kind, m.status]), [["image", "Stored"], ["audio", "Stored"]]);

@@ -45,7 +45,7 @@ export type WhatsAppDraft = {
   /** Pre-fill for the Brief (deterministic transcript extraction); the merchant still confirms every fact. */
   plan?: DraftPlan;
   /** True for drafts created by scripts/seed-whatsapp-draft.mts, never by the WhatsApp bridge. */
-  simulated?: boolean;
+  sample?: boolean;
   campaignId?: string;
   importedAt?: string;
   updatedAt: string;

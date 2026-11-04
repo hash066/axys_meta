@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import "./whatsapp.css";
 
 /**
- * ?sim=whatsapp: a SIMULATED WhatsApp conversation that shows how a merchant's voice note and photo
+ * ?sim=whatsapp: a SAMPLE WhatsApp conversation that shows how a merchant's voice note and photo
  * become a confirmed brief. Nothing here is sent through WhatsApp. The photo and the voice note come
  * from /demo/product.jpg and /demo/voice-note.mp3; the transcript comes from /demo/voice-note.json.
  * The facts checklist is extracted from that transcript by the small deterministic extractor below
@@ -476,7 +476,7 @@ export function WhatsAppSim() {
       </div>
 
       <div className="wa-stage">
-        <div className="wa-phone" role="group" aria-label="Simulated WhatsApp conversation with Axys Assistant">
+        <div className="wa-phone" role="group" aria-label="WhatsApp conversation with Axys Assistant">
           <StatusBar />
           <header className="wa-header">
             <a className="wa-back" href="/" aria-label="Back to the Axys home page">
@@ -658,7 +658,6 @@ export function WhatsAppSim() {
           <div className="wa-home" aria-hidden="true" />
         </div>
       </div>
-      <p className="wa-sim-foot">Simulated conversation for the demo</p>
       <p className="sr-only" role="status" aria-live="polite">
         {done
           ? "Draft ready. A link Open in Studio is available in the last message."

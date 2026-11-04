@@ -27,7 +27,7 @@ RESERVE_CREDITS = 40  # never spend the last few credits
 # Friendly names mapped to ElevenLabs premade voice names (ids are looked up from the account's voice list).
 PRESETS = {
     "narrator": "Sarah",   # mature, reassuring, confident
-    "merchant": "Jessica",  # playful, bright, warm (used for the simulated merchant voice note)
+    "merchant": "Jessica",  # playful, bright, warm (used for the demo merchant voice note)
     "reel": "Liam",        # energetic social media creator
     "calm": "Eric",
 }

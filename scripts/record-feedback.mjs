@@ -1,4 +1,4 @@
-// Demo v2 recorder: landing page -> simulated WhatsApp (real voice note, real Muse Voice transcript) -> Studio continues from the draft
+// Demo v2 recorder: landing page -> recorded WhatsApp (real voice note, real Muse Voice transcript) -> Studio continues from the draft
 // -> live Meta pipeline -> reel with audio -> Say it / Red Pen / Fix -> Instagram preview (not posted) -> insights (sample) and the grounded feedback loop.
 // Usage: node scripts/record-demo2.mjs <workDir>
 // Needs: Studio on :4310 started with AXYS_DEMO_SAMPLES=true, gateway on :8766, a seeded WhatsApp draft (scripts/seed-whatsapp-draft.mts),

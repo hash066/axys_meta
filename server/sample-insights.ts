@@ -1,5 +1,5 @@
 /**
- * Demo-only sample insights for a 10 second reel after one week. SIMULATED:
+ * Demo-only sample insights for a 10 second reel after one week. SAMPLE:
  * every record carries `sample: true` and the source label below, and the route
  * that stores it only exists when AXYS_DEMO_SAMPLES=true. Never Instagram data.
  *
@@ -51,7 +51,7 @@ export function sampleInstagramRecord(now = new Date()) {
     sample: true as const,
     preset: SAMPLE_PRESET,
     observedAt: now.toISOString(),
-    note: "Simulated numbers for a demonstration. Not retrieved from Instagram.",
+    note: "Sample numbers for a demonstration. Not retrieved from Instagram.",
     data: {
       data: [
         row("plays", total(PLAYS)),

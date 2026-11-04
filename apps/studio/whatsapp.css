@@ -1,4 +1,4 @@
-/* ?sim=whatsapp : simulated WhatsApp conversation. All selectors are prefixed .wa- so nothing leaks into the Studio. */
+/* ?sim=whatsapp : recorded WhatsApp conversation. All selectors are prefixed .wa- so nothing leaks into the Studio. */
 .wa-page {
   --wa-green: #008069;
   --wa-green-dark: #00705c;

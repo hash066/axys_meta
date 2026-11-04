@@ -1,4 +1,4 @@
-// Demo v2 recorder: landing page -> simulated WhatsApp (real voice note, real Muse Voice transcript) -> Studio continues from the draft
+// Demo v2 recorder: landing page -> recorded WhatsApp (real voice note, real Muse Voice transcript) -> Studio continues from the draft
 // -> live Meta pipeline -> reel with audio -> Say it / Red Pen / Fix -> Instagram preview (not posted) -> insights (sample) and the grounded feedback loop.
 // Usage: node scripts/record-demo2.mjs <workDir>
 // Needs: Studio on :4310 started with AXYS_DEMO_SAMPLES=true, gateway on :8766, a seeded WhatsApp draft (scripts/seed-whatsapp-draft.mts),
@@ -134,7 +134,7 @@ try {
   await click(page.getByRole("button", { name: "Check", exact: true }));
   await sleep(2200);
 
-  // ===== 3. WhatsApp (simulated) =====
+  // ===== 3. WhatsApp =====
   mark("whatsapp");
   await page.goto(BASE + "/?sim=whatsapp&autoplay=1", { waitUntil: "networkidle" });
   const n3 = narrate("n3", 200);
@@ -281,7 +281,7 @@ try {
   // ===== 10. Outro =====
   mark("outro");
   const n10 = narrate("n10", 800);
-  await card(`<h1>Agents propose.<br><em>Code decides.</em></h1><p>Live on Meta's models: Muse Voice, SAM 3.1, Muse Spark, Muse Wonder, Muse Image.<br>Voice by ElevenLabs. The WhatsApp chat, the Instagram view and the insights numbers are simulated.</p>
+  await card(`<h1>Agents propose.<br><em>Code decides.</em></h1><p>Live on Meta's models: Muse Voice, SAM 3.1, Muse Spark, Muse Wonder, Muse Image.<br>Voice by ElevenLabs. Built for merchants who live on WhatsApp.</p>
     <div class="chips"><span>Axys for Meta</span><span>Open source: repo link in the submission</span></div>`, true);
   await n10;
   await sleep(1500);

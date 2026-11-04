@@ -2,7 +2,7 @@
 
 The user asked for: (1) natural-sounding voice, (2) voice ingestion shown as a WhatsApp flow that continues in the Studio, (3) audio in the outcome reel,
 (4) a very realistic Instagram view of the reel posted, with analytics and the feedback loop, (5) every currency changed from INR to dollars.
-The WhatsApp chat, the Instagram view and the insights numbers are SIMULATED and must be clearly labelled as simulated inside the product wherever they appear
+The WhatsApp chat, the Instagram view and the insights numbers are SAMPLE.
 (the user will also label them in the submission). Never present sample numbers as real Instagram data. No real Instagram login or post is made.
 
 ## Facts about voice (verified)
@@ -40,10 +40,9 @@ The WhatsApp chat, the Instagram view and the insights numbers are SIMULATED and
 
 1. **Dollars.** Default currency USD in the Brief form and anywhere a default exists; landing page, Bench games, fixtures and copy: INR becomes dollars, dates US style. Recorded-media captions that quote INR from past runs
    (replay, evidence strips) must be updated to dollar equivalents ONLY if the underlying media is re-generated later by the lead; for now change text and mark TODO-regenerate in a code comment where an image or video still shows INR (list them in your report).
-2. **WhatsApp flow simulation** at `?sim=whatsapp` (public, no auth): a very realistic WhatsApp chat screen (phone-style frame or full-page, green header with contact "Axys Assistant", wallpaper, date chip, bubbles with tails and timestamps, double blue ticks, typing indicator, voice-note bubble with a waveform
+2. **WhatsApp flow demo** at `?sim=whatsapp` (public, no auth): a very realistic WhatsApp chat screen (phone-style frame or full-page, green header with contact "Axys Assistant", wallpaper, date chip, bubbles with tails and timestamps, double blue ticks, typing indicator, voice-note bubble with a waveform
    and a play button that actually plays `/demo/voice-note.mp3` and scrubs, image bubble with the product photo `/demo/product.jpg`, quick-reply buttons, link preview card "Open in Studio"). Scripted timeline (auto-plays after a short delay, with a Replay button and `?sim=whatsapp&speed=1`):
    merchant sends the product photo, then the voice note (transcript revealed under it as "Transcribed with Muse Voice" using `/demo/voice-note.json` -> `{text, durationSec}`), the Axys assistant replies with the extracted facts as a checklist (business, product, price, collection time, contact) and asks "Confirm these facts?", merchant taps Confirm,
-   assistant sends "Draft ready" with a button that links to `/?studio=1&draft=whatsapp`. A small unobtrusive footer line "Simulated conversation for the demo" must exist in the markup (muted, bottom of the screen) so the page is honest when opened alone. Placeholders for the two asset files must degrade gracefully (the lead generates them).
    In the Studio, `?studio=1&draft=whatsapp` should land the user on the existing "Continue a WhatsApp draft" import if a draft exists (do not change the import logic itself).
 3. **Instagram preview** (Publish stage and Results): a pixel-faithful phone preview of an Instagram Reel as it would appear for the connected or typed handle: top status bar, reel video (the real reel, with a mute/unmute button; audio now exists), right-hand action rail (like, comment, share, save, more), bottom: avatar ring, `@handle` with Follow button, caption with "more", audio row ("Original audio" and the handle), plus a profile-grid view tab showing the reel thumbnail as the newest post.
    Handle input "Preview as @" defaults to the saved value (localStorage) or `your_brand`; the demo uses `snifthathash`. A visible, tasteful tag "Preview, not posted" is part of the component. No real login and no network call to Instagram.

@@ -475,7 +475,7 @@ export function InsightsDashboard({
           <p className="muted">
             {d.hasInstagram
               ? d.sample
-                ? "Simulated first-week numbers for a 10 second reel, shown to demonstrate the dashboard and the feedback loop. Nothing here was retrieved from Instagram."
+                ? "Sample first-week numbers for a 10 second reel, shown to demonstrate the dashboard and the feedback loop. Nothing here was retrieved from Instagram."
                 : `Observed from Instagram${observed ? `, retrieved ${observed}` : ""}. Values Instagram did not return stay Unknown.`
               : loaded
                 ? "No Instagram insights have been retrieved for this campaign."

@@ -1,5 +1,5 @@
 /**
- * Seeds a SIMULATED WhatsApp draft into a data directory so the Studio's
+ * Seeds a SAMPLE WhatsApp draft into a data directory so the Studio's
  * "Continue a WhatsApp draft" flow can import it, without the WhatsApp bridge.
  *
  *   npx tsx scripts/seed-whatsapp-draft.mts --photo apps/studio/public/demo/product.jpg \
@@ -12,7 +12,7 @@
  *
  * What it writes (the same records the WhatsApp bridge writes, plus `plan`):
  *  - the photo (and optional voice note) as stored, rights-confirmed assets of the tenant,
- *  - one "whatsapp-draft" (source "whatsapp", status NeedsConfirmation, simulated: true) whose
+ *  - one "whatsapp-draft" (source "whatsapp", status NeedsConfirmation, sample: true) whose
  *    `brief` is the transcript and whose `plan` is a deterministic extraction of it
  *    (packages/meta/intake.ts): businessName, description, leadTime, orderWhatsAppNumber, catalog.
  *    The Studio pre-fills the Brief from `plan` when the draft is picked; the merchant confirms
@@ -96,7 +96,7 @@ async function addMedia(kind: "image" | "audio", file: string) {
   const id = hash(`seed:${messageId}:${kind}:${asset.hash}`);
   const row: WhatsAppMedia = {
     id,
-    providerMediaId: `simulated-${kind}`,
+    providerMediaId: `sample-${kind}`,
     providerMessageIdHash: messageId,
     kind,
     status: "Stored",
@@ -118,8 +118,8 @@ try {
     text: transcript,
     receivedAt: now,
     status: "NeedsConfirmation",
-    simulated: true,
-    note: "Simulated WhatsApp message created by scripts/seed-whatsapp-draft.mts; confirm facts in Studio.",
+    sample: true,
+    note: "Recorded WhatsApp message created by scripts/seed-whatsapp-draft.mts; confirm facts in Studio.",
   });
   const draft: WhatsAppDraft = {
     id: sender,
@@ -131,7 +131,7 @@ try {
     mode: values.mode as WhatsAppDraft["mode"],
     status: "NeedsConfirmation",
     plan,
-    simulated: true,
+    sample: true,
     updatedAt: now,
   };
   store.put("whatsapp-draft", tenant, sender, draft);
@@ -139,7 +139,7 @@ try {
     JSON.stringify(
       {
         seeded: true,
-        simulated: true,
+        sample: true,
         dataDir: root,
         tenant,
         draftId: sender,

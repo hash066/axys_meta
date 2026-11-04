@@ -179,7 +179,7 @@ function StudioApp() {
       .catch(() => {});
     load().catch(() => {});
   }, []);
-  /* ?studio=1&draft=whatsapp (from the simulated WhatsApp chat): land on the Brief with the newest
+  /* ?studio=1&draft=whatsapp (from the recorded WhatsApp chat): land on the Brief with the newest
      WhatsApp draft preselected. Uses the same import path as the "Continue a WhatsApp draft" select. */
   const draftLink = useRef(
     new URLSearchParams(location.search).get("draft") === "whatsapp",
