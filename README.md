@@ -81,6 +81,10 @@ These are Axys's own ledger units, not Meta API credits.
 Checks: `npm run typecheck && npm test` (Node, 110 tests) and `python -m pytest -q tests_py` (gateway). Live evidence:
 `node scripts/live-e2e.mjs` (see `docs/EVIDENCE.md`); preflight robustness: `npm run eval:preflight`.
 
+## Demo
+
+`docs/evidence/demo.mp4` is a 2:46 real run of the Studio on live Meta models (also served at `/demo.mp4` and from the landing page). Timeline and narration in `docs/DEMO.md`.
+
 ## Deploy
 
 `compose.yaml` runs the gateway, the app and Caddy (automatic HTTPS) on any small Linux server. See `docs/DEPLOY.md`; secrets via `node scripts/make-keys.mjs`.
