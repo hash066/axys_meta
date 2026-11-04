@@ -159,6 +159,37 @@ const tidy = (raw: string) =>
     .replace(/^[.!?,;:…"“”'‘’\s]+|[.!?,;:…"“”\s]+$/gu, "")
     .trim();
 
+export type PhraseCheck = {
+  allowed: boolean;
+  /** The tidied phrase when allowed; empty when rejected. */
+  cleaned: string;
+  /** Every distinct reason found (the engine's verdict first); empty if allowed. */
+  reasons: string[];
+};
+/** Pure, model-free check of one kinetic phrase with exactly the limits the
+ * direction sanitiser applies (at most 3 words, 28 characters, strict claim
+ * words). The verdict is `phraseProblem`'s; extra reasons are informational. */
+export function kineticPhraseCheck(raw: string): PhraseCheck {
+  const text = tidy(String(raw));
+  const verdict = phraseProblem(text, 3, 28);
+  if (!verdict) return { allowed: true, cleaned: text, reasons: [] };
+  const reasons = [verdict];
+  const add = (r: string | undefined) => {
+    if (r && !reasons.includes(r)) reasons.push(r);
+  };
+  if (/[0-9]/.test(text)) add("contains a digit");
+  if (CURRENCY.test(text)) add("mentions money");
+  if (/https?:|www\.|\.com\b|[/@]/i.test(text)) add("contains markup or a link");
+  if (text.length > 28) add("longer than 28 characters");
+  const words = text.toLowerCase().match(/[\p{L}]+(?:['’-][\p{L}]+)*/gu) ?? [];
+  if (words.length > 3) add("more than 3 words");
+  for (const w of words) {
+    const why = phraseProblem(w, 1, 60);
+    if (why && /^(claim word|superlative)/.test(why)) add(why);
+  }
+  return { allowed: false, cleaned: "", reasons };
+}
+
 /* ---------------------------------------------------------------- colours */
 
 const hexOf = (r: number, g: number, b: number) =>

@@ -182,3 +182,19 @@ Kinetic type contrast (renderer, `film-art.ts` `chooseInk` / `chooseContextInk`)
 the better ink plus an opposing outline and shadow, with a stronger top scrim on busy plates). Measured on live renders (ink vs the background pixels inside the text box,
 worst case / median): cake macro 7.57 / 10.55, cake context 2.67 / 7.23 (plain ink on the bright herb plate is worse, hence the outline), sneaker macro 6.88 / 10.88,
 sneaker context 2.36 / 6.13. Final suite: 189 Node tests and 8 gateway tests pass.
+
+## Round 5: Hardwright-style redesign (landing, The Bench, dark Studio) and live lab endpoints
+
+The site was restyled to match the look of the user's own "Hardwright" project (dark base, orange and violet accents, stat counters, recorded replay, before/after slider,
+capability grid, pipeline tabs, mini-games). Every number on the landing page carries a tag: live engine, recorded run or measured offline. Design brief: `docs/REDESIGN_CONTRACT.md`.
+
+| Area | Where | What |
+|---|---|---|
+| Landing page | `apps/studio/landing.tsx`, `landing.css`, `landing-kit.tsx`, `main.tsx` | Hero with autoplaying reel card, problem stat grid, recorded Say it / Red Pen / Fix replay, cutout drag slider and film strips, nine capability cards, pipeline tabs, how it works, architecture layers, "What is real" and honest limits. Styles scoped under `.lp`. |
+| The Bench | `apps/studio/bench.tsx`, `bench.css` | Five games. Live engine: Spot the stale surface (real preflight rules) and Would this tagline pass (real phrase filter); each falls back to clearly labelled recorded samples if the endpoint is unreachable. Recorded: Name that product, Cutout or not, Pick the ink. |
+| Public lab endpoints | `packages/meta/lab.ts`, `direction.ts` (`kineticPhraseCheck`), `server/app.ts`, `tests/public-lab.test.ts` | `GET/POST /api/v1/public/lab/preflight` (six deterministic scenarios built from the real text builders, one stale surface each, checked by the real `deterministicIssuesFromTexts`) and `POST /api/v1/public/lab/phrase`. No auth, no cookies, no model calls, 60 requests/min/IP, strict validation, nothing echoed. |
+| Dark Studio theme | `apps/studio/style.css`, `meta.css`, `redpen.css`, `sayit.css` | `--ax-*` tokens, orange primary, Geist, grid background, orange focus rings, AA contrast. The merchant website preview stays cream in a dark browser-style frame. The dead legacy `.marketing` block was removed. |
+| Fonts | `package.json` (`@fontsource-variable/geist`, `geist-mono`) | Bundled, so the content-security policy cannot block them. |
+| Assets | `apps/studio/public/landing/` | Real reels and optimised frames from the live runs in `docs/evidence/`. |
+
+Test status after this round: 198 Node tests pass.

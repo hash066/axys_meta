@@ -1,29 +1,34 @@
 /* Say it: one gesture from a sentence to a fixed campaign.
-   Dark green stage, paper cards. Contrast: cream #f6f1e4 on #1c3a2e is 11:1;
-   placeholder cream at 74% is above 4.5:1; gold #e8b04a with ink #2a170c is 9:1.
+   Dark stage with an orange glow, dark diff cards. Contrast: ink #eceee6 on #101210 is 16:1;
+   soft ink at 76% is above 7:1; dark ink #1b0f08 on orange #ff7a3d is 7.4:1.
    Motion only inside prefers-reduced-motion: no-preference. */
 .sayit {
-  --si-ink: #f6f1e4;
-  --si-soft: rgba(246, 241, 228, 0.76);
-  --si-line: rgba(246, 241, 228, 0.2);
-  --si-gold: #e8b04a;
-  --si-gold-ink: #2a170c;
-  --si-paper: #fffefa;
-  --si-green: #17562f;
+  --si-ink: #eceee6;
+  --si-soft: rgba(236, 238, 230, 0.78);
+  --si-line: rgba(236, 238, 230, 0.16);
+  --si-gold: #ff7a3d;
+  --si-gold-ink: #1b0f08;
+  --si-paper: #151815;
+  --si-green: #8ee6b0;
   position: relative;
   margin-bottom: 22px;
   padding: 26px 28px 24px;
-  border: 1px solid #14301f;
-  border-radius: 14px;
+  border: 1px solid var(--ax-line-2);
+  border-radius: var(--ax-radius-lg);
   background:
     radial-gradient(
-      520px 200px at 92% -30%,
-      rgba(232, 176, 74, 0.3),
+      560px 220px at 92% -30%,
+      rgba(255, 122, 61, 0.26),
       transparent 70%
     ),
-    linear-gradient(135deg, #16332a 0%, #1f4132 55%, #2a5640 100%);
+    radial-gradient(
+      480px 200px at -5% 120%,
+      rgba(183, 179, 255, 0.1),
+      transparent 70%
+    ),
+    linear-gradient(180deg, #131513 0%, #0e100e 100%);
   color: var(--si-ink);
-  box-shadow: 0 18px 40px -22px rgba(20, 48, 31, 0.7);
+  box-shadow: var(--ax-shadow-lg);
   scroll-margin-top: 14px;
 }
 .sayit .eyebrow {
@@ -32,10 +37,10 @@
 }
 .sayit h2 {
   margin: 0;
-  font-family: Georgia, serif;
+  font-family: var(--ax-sans);
   font-size: 28px;
-  font-weight: 400;
-  letter-spacing: -0.6px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
   line-height: 1.2;
   color: var(--si-ink);
 }
@@ -118,8 +123,8 @@
   min-width: 0;
   padding: 8px 8px 8px 18px;
   border: 1px solid var(--si-line);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--ax-radius-lg);
+  background: rgba(0, 0, 0, 0.35);
   transition:
     border-color 0.2s,
     background 0.2s,
@@ -127,8 +132,8 @@
 }
 .si-field:focus-within {
   border-color: var(--si-gold);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 3px rgba(232, 176, 74, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--ax-ring);
 }
 .si-field.is-rec {
   border-color: #ff8f84;
@@ -144,14 +149,14 @@
   background: transparent;
   box-shadow: none;
   color: var(--si-ink);
-  font-family: Georgia, serif;
-  font-size: 20px;
+  font-family: var(--ax-sans);
+  font-size: 19px;
   line-height: 1.35;
   resize: none;
   outline: none;
 }
 .sayit textarea::placeholder {
-  color: rgba(246, 241, 228, 0.74);
+  color: rgba(236, 238, 230, 0.66);
 }
 .sayit textarea[readonly] {
   opacity: 0.85;
@@ -169,16 +174,17 @@
 }
 .si-go:hover,
 .si-apply:hover {
-  filter: brightness(1.06);
+  background: var(--ax-orange-hi);
+  filter: none;
 }
 .sayit button:focus-visible,
 .sayit .si-chip:focus-visible {
-  outline: 3px solid #fff;
+  outline: 3px solid #ffb08a;
   outline-offset: 3px;
 }
 .si-go:disabled,
 .si-apply:disabled {
-  background: rgba(246, 241, 228, 0.18);
+  background: rgba(236, 238, 230, 0.14);
   color: var(--si-soft);
   opacity: 1;
 }
@@ -209,7 +215,7 @@
 }
 .si-chip:hover {
   border-color: var(--si-gold);
-  background: rgba(232, 176, 74, 0.12);
+  background: var(--ax-orange-soft);
   filter: none;
 }
 .si-text {
@@ -228,9 +234,10 @@
 .si-alert {
   margin: 14px 0 0;
   padding: 12px 16px;
-  border-radius: 10px;
-  background: #fff1ea;
-  color: #7a2e12;
+  border-radius: var(--ax-radius-sm);
+  border: 1px solid var(--ax-red-line);
+  background: var(--ax-red-soft);
+  color: var(--ax-red-text);
   font-size: 13px;
   line-height: 1.55;
 }
@@ -323,7 +330,7 @@
 .si-skeleton i {
   display: block;
   height: 72px;
-  border-radius: 12px;
+  border-radius: var(--ax-radius);
   background: linear-gradient(
     100deg,
     rgba(255, 255, 255, 0.07) 30%,
@@ -351,16 +358,18 @@
 }
 .si-card {
   padding: 18px 20px 16px;
-  border-radius: 12px;
+  border: 1px solid var(--ax-line-2);
+  border-radius: var(--ax-radius);
   background: var(--si-paper);
-  color: #26392f;
-  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.6);
+  color: var(--ax-ink);
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.8);
 }
 .si-label {
   margin: 0 0 12px;
-  color: #4d5c52;
+  color: var(--ax-ink-3);
+  font-family: var(--ax-mono);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -373,38 +382,38 @@
   line-height: 1.25;
 }
 .si-from {
-  color: #8a3a20;
+  color: var(--ax-red-text);
   font-size: 17px;
 }
 .si-from s {
   text-decoration-thickness: 2px;
-  text-decoration-color: #b3261e;
+  text-decoration-color: var(--ax-red);
 }
 .si-arrow {
   width: 40px;
   height: 16px;
   flex: none;
   fill: none;
-  stroke: #687268;
+  stroke: var(--ax-ink-3);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .si-to mark {
   padding: 0 4px;
-  background: linear-gradient(transparent 58%, #f6e3a8 58%);
+  background: linear-gradient(transparent 62%, rgba(95, 211, 141, 0.28) 62%);
   color: var(--si-green);
-  font-family: Georgia, serif;
+  font-family: var(--ax-sans);
   font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
 }
 .si-quote {
   display: grid;
   gap: 2px;
   margin: 0;
   padding: 10px 0 0 14px;
-  border-top: 1px dashed #d4dbd0;
+  border-top: 1px dashed var(--ax-line-2);
   border-left: 0;
   position: relative;
 }
@@ -416,18 +425,18 @@
   bottom: 0;
   width: 3px;
   border-radius: 2px;
-  background: #d9b26a;
+  background: var(--ax-orange);
 }
 .si-quote-by {
-  color: #5c675e;
+  color: var(--ax-ink-3);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .si-quote q {
-  color: #26392f;
-  font-family: Georgia, serif;
+  color: var(--ax-ink);
+  font-family: var(--ax-sans);
   font-size: 16px;
   font-style: italic;
   line-height: 1.45;
@@ -439,10 +448,10 @@
 }
 .si-ask {
   padding: 16px 20px;
-  border: 1px solid #dcb56a;
-  border-radius: 12px;
-  background: #fdf1d8;
-  color: #4b2f09;
+  border: 1px solid var(--ax-amber-line);
+  border-radius: var(--ax-radius);
+  background: var(--ax-amber-soft);
+  color: var(--ax-amber-text);
 }
 .si-ask.soft {
   margin-top: 14px;
@@ -515,8 +524,8 @@
   gap: 4px 10px;
   padding: 8px 14px;
   border: 1px solid var(--si-line);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.07);
+  border-radius: var(--ax-radius-sm);
+  background: rgba(255, 255, 255, 0.05);
   font-size: 13px;
 }
 .si-applied-l {
@@ -524,14 +533,14 @@
   font-weight: 600;
 }
 .si-applied-v s {
-  color: #ffb4a8;
+  color: var(--ax-red-text);
 }
 .si-applied-v b {
   color: var(--si-soft);
 }
 .si-applied-v mark {
   background: transparent;
-  color: #7be39b;
+  color: var(--ax-green-text);
   font-weight: 800;
 }
 .si-dockrow {
@@ -557,7 +566,7 @@
   width: 28px;
   height: 28px;
   fill: none;
-  stroke: #7be39b;
+  stroke: var(--ax-green);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -582,13 +591,14 @@
   margin-bottom: 14px;
 }
 .sayit.step-fixed {
+  border-color: var(--ax-green-line);
   background:
     radial-gradient(
-      520px 200px at 92% -30%,
-      rgba(123, 227, 155, 0.28),
+      560px 220px at 92% -30%,
+      rgba(95, 211, 141, 0.22),
       transparent 70%
     ),
-    linear-gradient(135deg, #123022 0%, #17462d 60%, #1e5b3a 100%);
+    linear-gradient(180deg, #111512 0%, #0e100e 100%);
 }
 
 /* motion: only when the user has not asked to reduce it */
@@ -610,7 +620,10 @@
   .si-to mark {
     background-size: 0 100%;
     background-repeat: no-repeat;
-    background-image: linear-gradient(transparent 58%, #f6e3a8 58%);
+    background-image: linear-gradient(
+      transparent 62%,
+      rgba(95, 211, 141, 0.28) 62%
+    );
     animation: si-hl 0.5s ease-out 0.55s forwards;
   }
   .si-quote {
@@ -698,7 +711,7 @@
 }
 @keyframes si-glow {
   50% {
-    box-shadow: 0 0 0 8px rgba(232, 176, 74, 0.28);
+    box-shadow: 0 0 0 8px rgba(255, 122, 61, 0.28);
   }
 }
 @keyframes si-ring {
@@ -716,7 +729,7 @@
 @media (max-width: 700px) {
   .sayit {
     padding: 20px 16px;
-    border-radius: 12px;
+    border-radius: var(--ax-radius);
   }
   .sayit h2 {
     font-size: 23px;

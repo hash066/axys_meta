@@ -54,7 +54,25 @@ import {
   parseCommand,
   verifyForApply,
 } from "../packages/meta/command.ts";
+import { kineticPhraseCheck } from "../packages/meta/direction.ts";
+import {
+  LAB_SURFACES,
+  labCheck,
+  labScenarioIds,
+  labScenarios,
+} from "../packages/meta/lab.ts";
 import { installCrmRoutes } from "./crm.ts";
+
+const LabGuess = z
+  .object({
+    scenarioId: z
+      .string()
+      .max(40)
+      .refine((v) => labScenarioIds().includes(v)),
+    guess: z.enum(LAB_SURFACES),
+  })
+  .strict();
+const LabPhrase = z.object({ text: z.string().max(60) }).strict();
 import { Credits } from "./credits.ts";
 export function createApp(
   store = new Store(),
@@ -230,6 +248,50 @@ export function createApp(
       limit: "12mb",
     }),
   );
+  // Public lab: stateless, no auth, no cookies, no model calls. Mounted before
+  // the global JSON parser and the auth middleware, with its own small parser
+  // and error handler so no input (or parser message) is ever echoed back.
+  const labFail = (res: express.Response, status: number, code: string) =>
+    res.status(status).json({
+      error: { code, message: "Invalid lab request" },
+    });
+  const lab = express.Router();
+  lab.use(
+    rateLimit({
+      windowMs: 60000,
+      limit: 60,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: {
+        error: { code: "rate_limited", message: "Too many lab requests" },
+      },
+    }),
+  );
+  lab.use(express.json({ limit: "2kb" }));
+  lab.get("/preflight", (_req, res) => {
+    res.set("Cache-Control", "no-store").json({ scenarios: labScenarios() });
+  });
+  lab.post("/preflight", (req, res) => {
+    const body = LabGuess.safeParse(req.body);
+    if (!body.success) return labFail(res, 422, "validation");
+    const verdict = labCheck(body.data.scenarioId, body.data.guess);
+    if (!verdict) return labFail(res, 404, "not_found");
+    res.set("Cache-Control", "no-store").json(verdict);
+  });
+  lab.post("/phrase", (req, res) => {
+    const body = LabPhrase.safeParse(req.body);
+    if (!body.success) return labFail(res, 422, "validation");
+    res.set("Cache-Control", "no-store").json(kineticPhraseCheck(body.data.text));
+  });
+  lab.use(
+    (
+      _err: unknown,
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction,
+    ) => labFail(res, 400, "bad_request"),
+  );
+  app.use("/api/v1/public/lab", lab);
   app.use(express.json({ limit: "100kb" }));
   app.get("/health", (_req, res) => {
     store.db.prepare("SELECT 1").get();

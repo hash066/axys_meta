@@ -1,9 +1,10 @@
-/* Red Pen: hand-drawn marks over the real artifacts.
+/* Red Pen: hand-drawn marks over the real artifacts. The artifacts themselves (cream site, caption card) stay light
+   inside dark frames; only the chrome around them follows the dark Studio theme.
    Colours: ink red #b3261e is 6.3:1 on white and 5.9:1 on the cream site;
    on the dark reel the ink is #ff8f84 (9:1 on #150e0b). Marks never rely on colour alone:
    each has a number, a note in words, and a matching row in the list. */
 .redpen {
-  --rp-ok-list: #17562f;
+  --rp-ok-list: var(--ax-green-text);
 }
 .rp-actions {
   display: flex;
@@ -37,9 +38,10 @@
 }
 .rp-fig > figcaption {
   margin-bottom: 8px;
-  color: #4d5c52;
+  color: var(--ax-ink-3);
+  font-family: var(--ax-mono);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -52,9 +54,10 @@
   --rp-badge-text: #fff;
   position: relative;
   overflow: hidden;
-  border: 1px solid #dfe3d8;
-  border-radius: 8px;
+  border: 1px solid var(--ax-line-2);
+  border-radius: var(--ax-radius);
   background: #fffefa;
+  box-shadow: var(--ax-shadow-lg);
 }
 .rp-host.rp-dark {
   --rp-ink: #ff8f84;
@@ -63,7 +66,7 @@
   --rp-ok: #7be39b;
   --rp-badge-text: #2a0a07;
   background: #0d0a09;
-  border-color: #2b211c;
+  border-color: #3a2c25;
 }
 .rp-scroll {
   max-height: 560px;
@@ -71,7 +74,7 @@
   background: #fbf5e9;
 }
 .rp-scroll:focus-visible {
-  outline: 3px solid #b1752c;
+  outline: 3px solid var(--ax-orange);
   outline-offset: -3px;
 }
 .rp-site .merchant-site {
@@ -126,7 +129,9 @@
 .rp-caption {
   margin: 0;
   padding: 22px 250px 26px 20px;
-  font: 15px/1.75 Georgia, serif;
+  font:
+    15px/1.75 Georgia,
+    serif;
   color: #2c3a31;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -199,7 +204,9 @@
 }
 .rp-badge text {
   fill: var(--rp-badge-text);
-  font: 700 11px Arial, sans-serif;
+  font:
+    700 11px Arial,
+    sans-serif;
 }
 .rp-mark.fixed .rp-badge circle {
   fill: var(--rp-ok);
@@ -300,7 +307,7 @@
   font-size: 14px;
 }
 .rp-fixed-count {
-  color: #17562f;
+  color: var(--ax-green-text);
 }
 .rp-list {
   display: grid;
@@ -315,26 +322,30 @@
   align-items: flex-start;
   width: 100%;
   padding: 13px 15px;
-  border: 1px solid #dfe3d8;
-  background: #fff;
-  color: #26392f;
+  border: 1px solid var(--ax-line);
+  border-radius: var(--ax-radius);
+  background: var(--ax-raised);
+  color: var(--ax-ink);
   font-weight: 400;
   text-align: left;
 }
 .rp-item:hover {
   filter: none;
-  border-color: #b3261e;
+  background: var(--ax-raised-2);
+  border-color: var(--ax-red);
 }
 .rp-li.fixed .rp-item:hover {
-  border-color: #1b6b3a;
+  border-color: var(--ax-green);
 }
 .rp-item[aria-current="true"] {
-  border-color: #b3261e;
-  box-shadow: 0 0 0 2px rgba(179, 38, 30, 0.25);
+  border-color: var(--ax-red);
+  background: var(--ax-red-soft);
+  box-shadow: 0 0 0 2px rgba(255, 106, 89, 0.28);
 }
 .rp-li.fixed .rp-item[aria-current="true"] {
-  border-color: #1b6b3a;
-  box-shadow: 0 0 0 2px rgba(27, 107, 58, 0.25);
+  border-color: var(--ax-green);
+  background: var(--ax-green-soft);
+  box-shadow: 0 0 0 2px rgba(95, 211, 141, 0.28);
 }
 .rp-num {
   flex: none;
@@ -343,13 +354,13 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #b3261e;
+  background: #c8362a;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
 }
 .rp-li.fixed .rp-num {
-  background: #1b6b3a;
+  background: #1f7a45;
 }
 .rp-body {
   display: grid;
@@ -369,22 +380,22 @@
   font-weight: 700;
 }
 .rp-state.block {
-  color: #8a2a1a;
+  color: var(--ax-red-text);
 }
 .rp-state.warn {
-  color: #7a4a0a;
+  color: var(--ax-amber-text);
 }
 .rp-state.ok {
-  color: #17562f;
+  color: var(--ax-green-text);
 }
 .rp-text {
   overflow-wrap: anywhere;
 }
 .rp-diff {
-  color: #3f4d44;
+  color: var(--ax-ink-2);
 }
 .rp-where {
-  color: #566358;
+  color: var(--ax-ink-3);
   font-size: 12px;
 }
 
@@ -413,7 +424,7 @@
   margin: 0 0 4px;
 }
 .rp-demo-head .wordmark {
-  color: #234735;
+  color: var(--ax-ink);
 }
 .rp-demo-note {
   max-width: 76ch;
