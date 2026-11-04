@@ -158,3 +158,60 @@ async def json_call(body: JsonCall):
     except Exception as exc:  # noqa: BLE001
         return _err(f"{body.model}: {exc}", 502)
     return {"json": data, "model": model}
+
+
+class PlateCall(BaseModel):
+    backdrop: str = Field(min_length=3, max_length=300)
+
+
+@app.post("/v1/plate")
+async def plate(body: PlateCall):
+    try:
+        client = mc.make_client()
+        out = await asyncio.to_thread(mc.generate_plate, client, body.backdrop.strip())
+    except mc.MissingKey as exc:
+        return _err(str(exc), 503)
+    except Exception as exc:  # noqa: BLE001
+        return _err(f"Muse Image: {exc}", 502)
+    return {"image_png_b64": _b64(out)}
+
+
+@app.post("/v1/segment_multi")
+async def segment_multi(image: UploadFile = File(...), concepts: str = Form(...)):
+    """Union of several concepts (e.g. the product plus its visible parts) as one cutout."""
+    import json as _json
+
+    try:
+        png, size = await _read_image(image)
+    except ValueError as exc:
+        return _err(str(exc), 400)
+    try:
+        items = [str(c).strip()[:80] for c in _json.loads(concepts)][:4]
+    except Exception:  # noqa: BLE001
+        return _err("concepts must be a JSON list of up to 4 short phrases.", 400)
+    items = [c for c in items if c]
+    if not items:
+        return _err("concepts must not be empty.", 400)
+    try:
+        client = mc.make_client()
+
+        async def one(concept):
+            try:
+                return await asyncio.to_thread(mc.sam_mask, client, png, size, concept)
+            except mc.MissingKey:
+                raise
+            except Exception:  # noqa: BLE001  a missing part must not sink the whole cutout
+                return None
+
+        masks = await asyncio.gather(*[one(c) for c in items])
+        merged = mc.union_masks(masks, size)
+        if merged is None:
+            return {"found": False, "concept": " + ".join(items), "coverage": 0.0, "bbox": None, "size": list(size),
+                    "overlay_png_b64": None, "cutout_png_b64": None}
+        overlay, cutout, stats = mc.render_mask_views(png, merged)
+        return {"found": True, "concept": " + ".join(items), "coverage": stats["coverage"], "bbox": stats["bbox"],
+                "size": list(size), "overlay_png_b64": _b64(overlay), "cutout_png_b64": _b64(cutout)}
+    except mc.MissingKey as exc:
+        return _err(str(exc), 503)
+    except Exception as exc:  # noqa: BLE001
+        return _err(f"SAM 3.1: {exc}", 502)

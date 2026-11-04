@@ -15,7 +15,7 @@ import { readFileSync } from "node:fs";
 import { command, renderReel } from "../packages/renderers/reel.ts";
 import { propose } from "../packages/inference/meta.ts";
 import { MuseGateway } from "../packages/meta/gateway.ts";
-import { usableMedia } from "../packages/meta/enrichment.ts";
+import { loadEnrichment, usableMedia } from "../packages/meta/enrichment.ts";
 import { assertPreflightClear } from "../packages/meta/preflight.ts";
 import { Meta, type Connection } from "../services/publishing/meta.ts";
 import {
@@ -446,6 +446,23 @@ export class Engine {
       const cutouts = new Map<string, Buffer>();
       for (const [productId, assetId] of usableMedia(this.store, c).cutouts)
         cutouts.set(productId, await this.bytes(c.tenantId, assetId));
+      // Product-free backdrop plates (scene shots need a plate AND a cutout).
+      const plates: Buffer[] = [];
+      const platePurposes: (string | undefined)[] = [];
+      const enrichment = cutouts.size ? loadEnrichment(this.store, c) : null;
+      if (cutouts.size)
+        for (const p of enrichment?.plates ?? [])
+          if (
+            this.store.get<Asset>("asset", c.tenantId, p.assetId)?.mime ===
+            "image/png"
+          )
+            await this.bytes(c.tenantId, p.assetId).then(
+              (b) => {
+                plates.push(b);
+                platePurposes.push(p.purpose);
+              },
+              () => undefined, // a missing plate just means no scene shot
+            );
       const rendered = await renderReel(
         c.reel,
         path.join(
@@ -458,7 +475,14 @@ export class Engine {
         (id) => this.bytes(c.tenantId, id),
         generatedClips,
         cutouts,
+        plates,
+        // Studio film: needs Muse Spark's direction (renderReel falls back otherwise).
+        enrichment?.direction
+          ? { direction: enrichment.direction, platePurposes }
+          : undefined,
       );
+      // Which look each product got (the Studio seeks the facts card by it).
+      c.generation = { ...c.generation!, reelLayout: rendered.layouts } as typeof c.generation;
       const a = await this.asset(c.tenantId, rendered.bytes, "video/mp4");
       c.videoPosterId = (
         await this.asset(c.tenantId, rendered.poster, "image/png")

@@ -1,9 +1,17 @@
 import sharp from "sharp";
-import { spawn } from "node:child_process";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import type { ReelSpec } from "../campaign/index.ts";
 import { prepareCutout } from "./cutout.ts";
+import { command } from "./ffmpeg.ts";
+import {
+  buildScene,
+  preparePlate,
+  sceneShotFilter,
+  STILL,
+  type SceneGeometry,
+  type ScenePlan,
+} from "./scene.ts";
 import {
   backgroundPalette,
   buildBackground,
@@ -13,6 +21,7 @@ import {
   type TextLayer,
 } from "./polish-art.ts";
 import { cleanText, layoutText } from "./polish.ts";
+import { renderFilm, type FilmDirection, type FilmReport } from "./film.ts";
 const wrap = (text: string) => {
   const chars = Array.from(text),
     lines: string[] = [];
@@ -32,34 +41,43 @@ const xml = (s: string) =>
         "'": "&apos;",
       })[c]!,
   );
-export function command(exe: string, args: string[]) {
-  return new Promise<string>((resolve, reject) => {
-    const p = spawn(exe, args, {
-      windowsHide: true,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let out = "",
-      err = "";
-    p.stdout.on("data", (b) => {
-      out = (out + b).slice(-20000);
-    });
-    p.stderr.on("data", (b) => {
-      err = (err + b).slice(-4000);
-    });
-    const timer = setTimeout(() => p.kill(), 180000);
-    p.on("error", (e) => {
-      clearTimeout(timer);
-      reject(e);
-    });
-    p.on("exit", (code) => {
-      clearTimeout(timer);
-      code === 0
-        ? resolve(out)
-        : reject(
-            new Error(`Media processing failed (${code}). ${err.slice(-250)}`),
-          );
-    });
-  });
+export { command, type CommandOptions } from "./ffmpeg.ts";
+/** Validates the encoded reel and extracts its poster frame. */
+async function finishReel(out: string, dir: string, posterAt: string) {
+  const probe = JSON.parse(
+    await command(process.env.FFPROBE_PATH || "ffprobe", [
+      "-v",
+      "error",
+      "-show_streams",
+      "-show_format",
+      "-of",
+      "json",
+      out,
+    ]),
+  );
+  const v = probe.streams.find(
+    (s: { codec_type: string }) => s.codec_type === "video",
+  );
+  if (
+    v.width !== 1080 ||
+    v.height !== 1920 ||
+    v.codec_name !== "h264" ||
+    Number(probe.format.duration) < 3 ||
+    Number(probe.format.size) > 100000000
+  )
+    throw new Error("Encoded video validation failed");
+  const poster = path.join(dir, "poster.png");
+  await command(process.env.FFMPEG_PATH || "ffmpeg", [
+    "-y",
+    "-i",
+    out,
+    "-ss",
+    posterAt,
+    "-frames:v",
+    "1",
+    poster,
+  ]);
+  return { bytes: await readFile(out), poster: await readFile(poster), probe };
 }
 export async function renderReel(
   spec: ReelSpec,
@@ -68,11 +86,106 @@ export async function renderReel(
   generatedClips = new Map<string, Buffer>(),
   /** Optional SAM cutouts (PNG with alpha) keyed by product id. */
   cutouts = new Map<string, Buffer>(),
+  /**
+   * Optional product-free backdrop plates (PNG/JPEG). A product that has a SAM
+   * cutout gets the product-true scene shot on plates[its index], else plates[0].
+   */
+  plates: Buffer[] = [],
+  /**
+   * Studio film (needs Muse Spark's `direction` AND a usable cutout for every
+   * shot; any failure falls back to the scene/cutout/baseline looks).
+   * `platePurposes[i]` labels plates[i] ("hero" | "context" | "detail").
+   */
+  film?: { direction?: FilmDirection; platePurposes?: (string | undefined)[] },
 ) {
   await mkdir(dir, { recursive: true });
   const photos: string[] = [];
   const overlays: string[] = [];
-  const sourceKinds: ("photo" | "clip" | "cutout")[] = [];
+  const sourceKinds: ("photo" | "clip" | "cutout" | "scene")[] = [];
+  const scenePlans = new Map<
+    number,
+    ScenePlan & { layers: TextLayer[]; layerFiles: string[] }
+  >();
+  const plateCache = new Map<
+    Buffer,
+    Awaited<ReturnType<typeof preparePlate>>
+  >();
+  /** Text layers of the cutout and scene looks: identical layout (Red Pen boxes depend on it). */
+  const textLayersFor = async (
+    i: number,
+    shotText: string,
+    palette: ReturnType<typeof backgroundPalette>,
+  ) => {
+    const [name = "", priceText = "", ...rest] =
+      cleanText(shotText).split(/\r?\n/);
+    const block = layoutText(
+      cleanText(spec.facts.business),
+      name,
+      priceText,
+      rest.join(" · "),
+    );
+    const layers = await buildTextLayers(block, palette, {
+      index: i,
+      total: spec.shots.length,
+      last: i === spec.shots.length - 1,
+      cta: "Message us to order →",
+    });
+    const layerFiles: string[] = [];
+    for (let j = 0; j < layers.length; j++) {
+      const f = path.join(dir, `text-${i}-${j}.png`);
+      await writeFile(f, layers[j].png);
+      layerFiles.push(f);
+    }
+    return { layers, layerFiles };
+  };
+  const filmEligible =
+    !!film?.direction &&
+    plates.length > 0 && // direction AND plates (plates=0 keeps the flat cutout look)
+    spec.shots.length > 0 &&
+    spec.shots.every(
+      (s) => cutouts.has(s.productId) && !generatedClips.has(s.productId),
+    );
+  let filmFallback: string | null = null;
+  if (filmEligible) {
+    try {
+      const palette = backgroundPalette(spec.style, null);
+      const r = await renderFilm({
+        spec,
+        dir,
+        cutouts,
+        plates: plates.map((png, i) => ({
+          png,
+          purpose: film!.platePurposes?.[i],
+        })),
+        direction: film!.direction,
+        textLayersFor,
+        palette,
+      });
+      const done = await finishReel(r.out, dir, "1.4");
+      return {
+        ...done,
+        renderMode: "motion-template-v2" as const,
+        layouts: spec.shots.map(() => "film" as const) as (
+          | "film"
+          | "scene"
+          | "cutout"
+          | "baseline"
+        )[],
+        film: r as FilmReport | null,
+        filmFallback: null as string | null,
+        scenes: [] as {
+          index: number;
+          productId: string;
+          geometry: SceneGeometry;
+          scrim: ScenePlan["scrim"];
+        }[],
+      };
+    } catch (e) {
+      // Any film failure degrades to the scene/cutout/baseline looks below.
+      filmFallback = e instanceof Error ? e.message.slice(0, 300) : "film failed";
+      if (process.env.AXYS_FFMPEG_TRACE) console.error("[film] fallback:", e);
+    }
+  }
   const cutoutPlans = new Map<
     number,
     {
@@ -94,6 +207,32 @@ export async function renderReel(
       generated ? `generated-${i}.mp4` : `photo-${i}.png`,
     );
     const overlayFile = path.join(dir, `overlay-${i}.png`);
+    if (!generated && plates.length && cutouts.has(product.id)) {
+      const idx = spec.facts.products.findIndex((p) => p.id === product.id);
+      const raw = plates[idx] ?? plates[0];
+      if (!plateCache.has(raw)) plateCache.set(raw, await preparePlate(raw));
+      const plate = plateCache.get(raw);
+      const palette = backgroundPalette(spec.style, null);
+      // Any failure building the scene falls back to the flat-colour cutout shot.
+      const built = plate
+        ? await buildScene(
+            cutouts.get(product.id)!,
+            plate,
+            spec.style,
+            palette,
+            dir,
+            String(i),
+          ).catch(() => null)
+        : null;
+      if (built) {
+        const text = await textLayersFor(i, shot.text, palette);
+        scenePlans.set(i, { ...built, ...text });
+        photos.push(built.files.plate);
+        overlays.push(built.files.scrim);
+        sourceKinds.push("scene");
+        continue;
+      }
+    }
     const cutout =
       !generated && cutouts.has(product.id)
         ? await prepareCutout(cutouts.get(product.id)!)
@@ -108,27 +247,7 @@ export async function renderReel(
       );
       const bgFile = path.join(dir, `bg-${i}.png`);
       await writeFile(bgFile, await buildBackground(palette));
-      const [name = "", priceText = "", ...rest] = cleanText(shot.text).split(
-        /\r?\n/,
-      );
-      const block = layoutText(
-        cleanText(spec.facts.business),
-        name,
-        priceText,
-        rest.join(" · "),
-      );
-      const layers = await buildTextLayers(block, palette, {
-        index: i,
-        total: spec.shots.length,
-        last: i === spec.shots.length - 1,
-        cta: "Message us to order →",
-      });
-      const layerFiles: string[] = [];
-      for (let j = 0; j < layers.length; j++) {
-        const f = path.join(dir, `text-${i}-${j}.png`);
-        await writeFile(f, layers[j].png);
-        layerFiles.push(f);
-      }
+      const { layers, layerFiles } = await textLayersFor(i, shot.text, palette);
       cutoutPlans.set(i, { sprite, bgFile, layers, layerFiles });
       photos.push(cutoutFile);
       overlays.push(bgFile);
@@ -160,10 +279,28 @@ export async function renderReel(
   let inputs = 0;
   for (let i = 0; i < photos.length; i++) {
     first.push(inputs);
+    if (sourceKinds[i] === "scene") {
+      const sp = scenePlans.get(i)!;
+      const fl = sp.files;
+      // Plate is a single frame (zoompan expands it); the rest loop at 30 fps.
+      args.push("-i", fl.plate);
+      inputs++;
+      for (const f of [
+        fl.product,
+        fl.shadow,
+        fl.band,
+        fl.scrim,
+        ...sp.layerFiles,
+      ]) {
+        args.push("-i", f);
+        inputs++;
+      }
+      continue;
+    }
     if (sourceKinds[i] === "cutout") {
       const plan = cutoutPlans.get(i)!;
       for (const f of [photos[i], plan.bgFile, ...plan.layerFiles]) {
-        args.push("-loop", "1", "-t", "4.6", "-i", f);
+        args.push("-i", f);
         inputs++;
       }
       continue;
@@ -192,15 +329,15 @@ export async function renderReel(
     const scale = `(0.72+0.28*${ease}+0.05*t/4.6)`;
     const cy = 640;
     let chain =
-      `[${k}:v]format=rgba,fade=t=in:st=0:d=0.3:alpha=1,` +
+      `[${k}:v]${STILL}format=rgba,fade=t=in:st=0:d=0.3:alpha=1,` +
       `scale=w='trunc(iw*${scale}/2)*2':h='trunc(ih*${scale}/2)*2':eval=frame[cut${i}];` +
-      `[${k + 1}:v]format=rgba[bg${i}];` +
+      `[${k + 1}:v]${STILL}format=rgba[bg${i}];` +
       `[bg${i}][cut${i}]overlay=x='(W-w)/2':y='${cy}-h/2-7*sin(2*PI*t/3.6)':format=auto[s${i}0];`;
     plan.layers.forEach((layer, j) => {
       const d = layer.delay.toFixed(2);
       const fadeOut = layer.fadeOut ? ",fade=t=out:st=3.55:d=0.35:alpha=1" : "";
       chain +=
-        `[${k + 2 + j}:v]format=rgba,fade=t=in:st=${d}:d=0.45:alpha=1${fadeOut}[tx${i}_${j}];` +
+        `[${k + 2 + j}:v]${STILL}format=rgba,fade=t=in:st=${d}:d=0.45:alpha=1${fadeOut}[tx${i}_${j}];` +
         `[s${i}${j}][tx${i}_${j}]overlay=x=0:y='${layer.y}+34*pow(1-min(max((t-${d})/0.6,0),1),3)':format=auto[s${i}${j + 1}];`;
     });
     return (
@@ -211,6 +348,13 @@ export async function renderReel(
   const shotFilters = photos.map((_, i) => {
     const direction = i % 2 === 0 ? 1 : -1;
     const k = first[i];
+    if (sourceKinds[i] === "scene")
+      return sceneShotFilter(
+        i,
+        k,
+        scenePlans.get(i)!.geometry,
+        scenePlans.get(i)!.layers,
+      );
     if (sourceKinds[i] === "cutout") return cutoutShotFilter(i, k);
     const base =
       sourceKinds[i] === "clip"
@@ -261,44 +405,37 @@ export async function renderReel(
     "+faststart",
     out,
   );
-  await command(process.env.FFMPEG_PATH || "ffmpeg", args);
-  const probe = JSON.parse(
-    await command(process.env.FFPROBE_PATH || "ffprobe", [
-      "-v",
-      "error",
-      "-show_streams",
-      "-show_format",
-      "-of",
-      "json",
-      out,
-    ]),
+  // Scene shots are heavier (plate parallax, shadows, light sweep): more time each.
+  // ffmpeg can deadlock on long filter graphs; a silent run is killed and retried once.
+  const ffmpeg = () =>
+    command(process.env.FFMPEG_PATH || "ffmpeg", args, {
+      timeoutMs: 180000 + 120000 * scenePlans.size,
+      stallMs: 60000,
+    });
+  await ffmpeg().catch((e: Error) =>
+    /stalled/.test(e.message) ? ffmpeg() : Promise.reject(e),
   );
-  const v = probe.streams.find(
-    (s: { codec_type: string }) => s.codec_type === "video",
-  );
-  if (
-    v.width !== 1080 ||
-    v.height !== 1920 ||
-    v.codec_name !== "h264" ||
-    Number(probe.format.duration) < 3 ||
-    Number(probe.format.size) > 100000000
-  )
-    throw new Error("Encoded video validation failed");
-  const poster = path.join(dir, "poster.png");
-  await command(process.env.FFMPEG_PATH || "ffmpeg", [
-    "-y",
-    "-i",
+  const done = await finishReel(
     out,
-    "-ss",
-    sourceKinds[0] === "cutout" ? "1.6" : "0.8",
-    "-frames:v",
-    "1",
-    poster,
-  ]);
+    dir,
+    sourceKinds[0] === "cutout" || sourceKinds[0] === "scene" ? "1.6" : "0.8",
+  );
   return {
-    bytes: await readFile(out),
-    poster: await readFile(poster),
-    probe,
+    ...done,
     renderMode: "motion-template-v2" as const,
+    /** Per shot: which look was rendered. */
+    layouts: sourceKinds.map((k) =>
+      k === "scene" ? ("scene" as const) : k === "cutout" ? ("cutout" as const) : ("baseline" as const),
+    ),
+    film: null as FilmReport | null,
+    /** Why the film was skipped after being attempted (null when not attempted or it rendered). */
+    filmFallback,
+    /** Product-true scene shots (shot index -> geometry), for fidelity checks. */
+    scenes: [...scenePlans].map(([index, p]) => ({
+      index,
+      productId: spec.shots[index].productId,
+      geometry: p.geometry as SceneGeometry,
+      scrim: p.scrim,
+    })),
   };
 }

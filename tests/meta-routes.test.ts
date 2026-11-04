@@ -136,13 +136,19 @@ test("enrich persists SAM cutouts and Muse Image shots, then the reel and site r
         .status,
       422,
     );
-    const r = await h.call("POST", `/api/v1/campaigns/${campaign.id}/enrich`);
+    // plates=0: this test pins the flat cutout path; the backdrop-plate scene
+    // render is covered by tests/meta-command.test.ts (routes) and scene-*.test.ts.
+    const r = await h.call(
+      "POST",
+      `/api/v1/campaigns/${campaign.id}/enrich?plates=0`,
+    );
     assert.equal(r.status, 200);
     const body = await r.json();
     assert.deepEqual(body.data, {
       campaignId: body.campaignId,
       products: body.products,
       heroes: body.heroes,
+      direction: body.direction,
       models: body.models,
       generatedAt: body.generatedAt,
       warnings: body.warnings,
@@ -369,6 +375,23 @@ test("stale price: edit after generation without regenerating is caught by prefl
     assert.equal(price.found, "INR 125.00");
     assert.ok(bad.issues.some((i: any) => i.surface === "caption"));
     assert.ok(bad.issues.some((i: any) => i.surface === "reel"));
+    // Red Pen additions survive the route's JSON: located wrong text + the fix.
+    for (const i of bad.issues.filter((x: any) => x.severity === "block")) {
+      assert.equal(i.locate.text, "INR 125.00");
+      assert.deepEqual(i.fix, {
+        kind: "regenerate",
+        label: "Regenerate to use INR 129.00",
+      });
+    }
+    assert.equal(price.locate.reel, null);
+    const reelIssue = bad.issues.find((i: any) => i.surface === "reel");
+    assert.equal(reelIssue.locate.reel.shot, 0);
+    assert.equal(reelIssue.locate.reel.box.length, 4);
+    // GET returns the same stored issues, unchanged.
+    const storedGet = await (
+      await h.call("GET", `/api/v1/campaigns/${campaign.id}/preflight`)
+    ).json();
+    assert.deepEqual(storedGet.data?.issues ?? storedGet.issues, bad.issues);
 
     const refused = await h.call(
       "POST",

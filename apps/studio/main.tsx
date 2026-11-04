@@ -6,9 +6,15 @@ import {
   MetaLens,
   PreflightPanel,
   VoiceRecorder,
+  SCENARIO_STALE,
+  SCENARIO_COMMAND,
   blockCount,
+  sleepMs,
   type PreflightState,
 } from "./meta";
+import { AutoReel } from "./film";
+import { RedPen, RedPenDemo } from "./redpen";
+import { CommandDemo, SayIt, useSayItLink } from "./sayit";
 import "./style.css";
 import "./site.css";
 async function api(
@@ -211,8 +217,8 @@ function Landing() {
                 <span className="feature-index">01</span>
                 <h3>Describe it naturally</h3>
                 <p>
-                  Start with WhatsApp text, photos or Studio. Muse extracts
-                  a typed brief and asks for missing facts without inventing
+                  Start with WhatsApp text, photos or Studio. Muse extracts a
+                  typed brief and asks for missing facts without inventing
                   prices or promises.
                 </p>
               </div>
@@ -263,7 +269,9 @@ function Landing() {
               <span>02</span>
               <div>
                 <strong>Plan with Muse Wonder</strong>
-                <p>Muse Wonder makes the bounded, structured campaign decision.</p>
+                <p>
+                  Muse Wonder makes the bounded, structured campaign decision.
+                </p>
               </div>
             </li>
             <li>
@@ -369,6 +377,7 @@ function StudioApp() {
     [leadConsent, setLeadConsent] = useState(false),
     [leadActions, setLeadActions] = useState<Record<string, LeadAction>>({}),
     [preflight, setPreflight] = useState<PreflightState>();
+  const sayLink = useSayItLink();
   const run = async (label: string, fn: () => Promise<void>) => {
     setBusy(label);
     setError("");
@@ -494,6 +503,28 @@ function StudioApp() {
       videoHash: c.videoHash,
     });
     setApprovalDigest(d.digest);
+  }
+  /** Red pen "Fix with Axys": regenerate, poll until generation settles, return the settled campaign. */
+  async function regenerateForFix(): Promise<Campaign> {
+    if (!c) throw new Error("No campaign to regenerate.");
+    let next: Campaign = await api(`/campaigns/${c.id}/generate`, {
+      mode: caps.muse?.available ? "muse" : "manual",
+    });
+    setC(next);
+    const t0 = Date.now();
+    while (next.state === "Generating" && Date.now() - t0 < 5 * 60_000) {
+      await sleepMs(1500);
+      next = await api(`/campaigns/${c.id}`);
+      setC(next);
+    }
+    if (next.state === "Generating")
+      throw new Error(
+        "Regeneration is still running. Run preflight again when it finishes.",
+      );
+    if (!next.site)
+      throw new Error(next.error || "Regeneration did not produce a website.");
+    setCaps(await api("/capabilities"));
+    return next;
   }
   const preflightBlocked = !!c && blockCount(preflight, c) > 0;
   const campaignLeads =
@@ -1199,7 +1230,9 @@ ${text}`
                   </button>
                   <button
                     disabled={
-                      !!busy || !caps.muse?.available || c.state === "Generating"
+                      !!busy ||
+                      !caps.muse?.available ||
+                      c.state === "Generating"
                     }
                     onClick={() =>
                       run("Planning with Muse Wonder", async () => {
@@ -1227,6 +1260,23 @@ ${text}`
                 action={() => setStage(0)}
               />
             ))}
+          {(stage === 2 || stage === 3) &&
+            c &&
+            (c.site || c.state === "Generating") && (
+              <SayIt
+                campaign={c}
+                link={sayLink}
+                disabled={
+                  !!busy || ["Generating", "Publishing"].includes(c.state)
+                }
+                onApplied={(next) => {
+                  setC(next);
+                  setApprovalDigest("");
+                  setStage(3);
+                }}
+                onPreflight={setPreflight}
+              />
+            )}
           {stage === 2 &&
             (c?.site ? (
               <>
@@ -1256,7 +1306,8 @@ ${text}`
                   <section>
                     <h2>Final reel</h2>
                     {c.videoAssetId ? (
-                      <video
+                      <AutoReel
+                        aria-label="Final reel preview, muted loop"
                         onError={() =>
                           setError(
                             "This browser cannot preview the final video. Open this workspace in Chrome to review it.",
@@ -1395,6 +1446,13 @@ ${text}`
                   campaign={c}
                   state={preflight}
                   onResult={setPreflight}
+                />
+                <RedPen
+                  campaign={c}
+                  state={preflight}
+                  onResult={setPreflight}
+                  regenerate={regenerateForFix}
+                  {...sayLink.redpen}
                 />
                 <section className="panel">
                   <h2>Approve this exact version</h2>
@@ -1902,6 +1960,8 @@ function Empty({ text, action }: { text: string; action: () => void }) {
 function App() {
   const q = new URLSearchParams(window.location.search);
   const studio = q.has("studio") || q.has("fixture");
+  if (SCENARIO_STALE) return <RedPenDemo />;
+  if (SCENARIO_COMMAND) return <CommandDemo />;
   return window.location.pathname === "/" && !studio ? (
     <Landing />
   ) : (

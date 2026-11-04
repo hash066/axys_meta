@@ -2,10 +2,19 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { z } from "zod";
 import { Site } from "../renderers/Site.tsx";
-import { hash, price, type Campaign } from "../campaign/index.ts";
+import { hash, price, specs, type Campaign } from "../campaign/index.ts";
 import type { MuseGateway } from "./gateway.ts";
 import type { Store } from "../../server/store.ts";
 import { consumeCall } from "./budget.ts";
+import { usableMedia } from "./enrichment.ts";
+import {
+  closestLine,
+  replacementFor,
+  reelLocate,
+  type Fix,
+  type Locate,
+} from "./redpen.ts";
+export type { Fix, Locate, ReelBox } from "./redpen.ts";
 
 /**
  * Preflight: audit every surface (site, reel, caption, seller voice) against
@@ -22,7 +31,23 @@ export type Issue = {
   text: string;
   expected: string;
   found: string;
+  /** Red Pen: where the wrong text sits on the artifact (null = not derivable). */
+  locate?: Locate | null;
+  /** Red Pen: the single honest remedy for exact-rule mismatches. */
+  fix?: Fix | null;
 };
+/** Internal: how an issue's wrong text is found; stripped before returning. */
+type Hint = {
+  /** Exact wrong text as a substring of the surface. */
+  wrong?: string;
+  /** Pick the surface line most similar to this confirmed value. */
+  similar?: string;
+  /** Reel: take line `line` of shot `shot`'s text as the wrong text. */
+  shotLine?: { shot: number; line: number };
+  /** Reel: shot index to search first. */
+  shot?: number;
+};
+type Raw = Issue & { hint?: Hint };
 
 export class PreflightBlockedError extends Error {
   code = "preflight_blocked" as const;
@@ -160,7 +185,16 @@ const expiryDays = (iso: string) => {
   return new Set([day(0), day(5.5 * 3600000)]);
 };
 
-const norm = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+/** Comparison form: whitespace collapsed, case folded, and typographic dashes
+ * and quotes folded to ASCII so equivalent typography never alarms. */
+const norm = (s: string) =>
+  s
+    .replace(/[‐-―−]/g, "-")
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 const decode = (s: string) =>
   s
     .replace(/&#x([0-9a-f]+);/gi, (_, h) =>
@@ -178,28 +212,42 @@ const clip = (s: string, n = 160) =>
   s.length > n ? s.slice(0, n - 1) + "…" : s;
 
 export type SurfaceTexts = {
-  site?: { lines: string[]; hrefs: string[] };
+  site?: {
+    lines: string[];
+    hrefs: string[];
+    /** Visible text of each link (what a DOM search can find). */
+    anchors?: { href: string; text: string }[];
+  };
   reel?: { shots: string[] };
   caption?: { lines: string[] };
 };
 /** What a visitor/viewer would actually read, derived from the stored specs. */
-export function surfaceTexts(c: Campaign): SurfaceTexts {
-  const out: SurfaceTexts = {};
-  if (c.site) {
+function siteTexts(spec: NonNullable<Campaign["site"]>) {
+  {
     const markup = renderToStaticMarkup(
       React.createElement(Site, {
-        spec: c.site,
+        spec,
         assetUrl: (id) => `/asset/${id}`,
       }),
     );
-    out.site = {
+    return {
       lines: decode(markup.replace(/<[^>]+>/g, "\n"))
         .split("\n")
         .map((l) => l.trim())
         .filter(Boolean),
       hrefs: [...markup.matchAll(/href="([^"]*)"/g)].map((m) => decode(m[1])),
+      anchors: [
+        ...markup.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>(.*?)<\/a>/gs),
+      ].map((m) => ({
+        href: decode(m[1]),
+        text: decode(m[2].replace(/<[^>]+>/g, "")).trim(),
+      })),
     };
   }
+}
+export function surfaceTexts(c: Campaign): SurfaceTexts {
+  const out: SurfaceTexts = {};
+  if (c.site) out.site = siteTexts(c.site);
   if (c.reel) {
     out.reel = { shots: c.reel.shots.map((s) => s.text) };
     out.caption = { lines: c.reel.caption.split("\n") };
@@ -208,10 +256,20 @@ export function surfaceTexts(c: Campaign): SurfaceTexts {
 }
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Regex for a confirmed phrase that tolerates whitespace and dash typography. */
+const phraseRe = (phrase: string) =>
+  new RegExp(
+    phrase
+      .trim()
+      .split(/\s+/)
+      .map((tok) => escapeRe(tok).replace(/[-‐-―−]/g, "[-‐-―−]"))
+      .join("\\s+"),
+    "gi",
+  );
 const blank = (text: string, phrases: (string | undefined)[]) => {
   let out = text;
   for (const phrase of phrases)
-    if (phrase) out = out.replace(new RegExp(escapeRe(phrase), "gi"), " ");
+    if (phrase?.trim()) out = out.replace(phraseRe(phrase), " ");
   return out;
 };
 /** Remove merchant-confirmed free text so numbers/URLs inside it (e.g. "Buy 2
@@ -228,7 +286,17 @@ function mask(text: string, c: Campaign) {
 
 const sameUrl = (a: string, b: string) => {
   try {
-    return new URL(a).href === new URL(b).href;
+    const x = new URL(a),
+      y = new URL(b);
+    // A trailing slash on the path is the same page; query strings are not.
+    const path = (u: URL) =>
+      u.pathname === "/" ? "/" : u.pathname.replace(/\/+$/, "");
+    return (
+      x.origin === y.origin &&
+      path(x) === path(y) &&
+      x.search === y.search &&
+      x.hash === y.hash
+    );
   } catch {
     return a === b;
   }
@@ -247,7 +315,7 @@ function checkProducts(
   surface: Surface,
   lines: string[],
   c: Campaign,
-  out: Issue[],
+  out: Raw[],
   requirePresence = true,
 ) {
   const names = c.facts.products.map((p) => norm(p.name));
@@ -264,6 +332,8 @@ function checkProducts(
   );
   const nlines = lines.map(norm);
   for (const p of c.facts.products) {
+    const shotIdx = c.reel?.shots.findIndex((x) => x.productId === p.id) ?? -1;
+    const shot = surface === "reel" && shotIdx >= 0 ? shotIdx : undefined;
     const name = norm(p.name);
     const longer = names.filter(
       (n) => n.length > name.length && n.includes(name),
@@ -283,6 +353,10 @@ function checkProducts(
           text: `Product "${p.name}" is missing from the ${surface}`,
           expected: `${p.name} — ${price(p)}`,
           found: "not present",
+          hint:
+            shot !== undefined
+              ? { shotLine: { shot, line: 0 } }
+              : { similar: p.name },
         });
       continue;
     }
@@ -323,6 +397,7 @@ function checkProducts(
           text: `Price for "${p.name}" on the ${surface} does not match the confirmed price`,
           expected: price(p),
           found: money(prices[0]),
+          hint: { wrong: prices[0].raw, shot },
         });
       }
     }
@@ -336,7 +411,7 @@ function checkStrayPrices(
   text: string,
   c: Campaign,
   alreadyFlagged: Set<string>,
-  out: Issue[],
+  out: Raw[],
 ) {
   const allowed = c.facts.products.map((p) => `${p.currency}|${p.priceMinor}`);
   const seen = new Set<string>();
@@ -350,16 +425,12 @@ function checkStrayPrices(
       text: `${surface === "voice" ? "Spoken" : "Unexpected"} price "${m.raw}" is not one of the confirmed prices`,
       expected: c.facts.products.map(price).join(", "),
       found: money(m),
+      hint: { wrong: m.raw },
     });
   }
 }
 
-function checkExpiry(
-  surface: Surface,
-  text: string,
-  c: Campaign,
-  out: Issue[],
-) {
+function checkExpiry(surface: Surface, text: string, c: Campaign, out: Raw[]) {
   for (const d of parseExpiryDates(mask(text, c))) {
     if (!c.facts.validUntil) {
       out.push({
@@ -368,6 +439,7 @@ function checkExpiry(
         text: `The ${surface} states an expiry date but no offer expiry was confirmed`,
         expected: "no expiry date",
         found: d.raw,
+        hint: { wrong: d.raw },
       });
     } else if (!expiryDays(c.facts.validUntil).has(d.day)) {
       out.push({
@@ -376,6 +448,7 @@ function checkExpiry(
         text: `Expiry date on the ${surface} does not match the confirmed offer expiry`,
         expected: c.facts.validUntil,
         found: d.raw,
+        hint: { wrong: d.raw },
       });
     }
   }
@@ -385,9 +458,25 @@ function checkExpiry(
 export function deterministicIssues(
   c: Campaign,
   voiceTranscript?: string,
+  opts: RedPenOptions = {},
 ): Issue[] {
-  const out: Issue[] = [];
-  const t = surfaceTexts(c);
+  return deterministicIssuesFromTexts(
+    c,
+    surfaceTexts(c),
+    voiceTranscript,
+    opts,
+  );
+}
+
+/** Same rules over explicit surface texts. Exported so the mutation eval can
+ * apply formatting/drift edits to exactly what a viewer would read. */
+export function deterministicIssuesFromTexts(
+  c: Campaign,
+  t: SurfaceTexts,
+  voiceTranscript?: string,
+  opts: RedPenOptions = {},
+): Issue[] {
+  const out: Raw[] = [];
   const f = c.facts;
   const has = (hay: string, needle?: string) =>
     !needle || norm(hay).includes(norm(needle));
@@ -404,6 +493,7 @@ export function deterministicIssues(
         text: `${label} on the ${surface} does not match the confirmed ${label.toLowerCase()}`,
         expected,
         found: clip(hay),
+        hint: { similar: expected },
       });
   };
 
@@ -452,6 +542,9 @@ export function deterministicIssues(
           text: "Contact link on the site does not match the confirmed contact",
           expected: f.contact,
           found: href,
+          hint: {
+            wrong: t.site.anchors?.find((a) => a.href === href)?.text,
+          },
         });
     checkExpiry("site", joined, c, out);
     if (
@@ -482,6 +575,7 @@ export function deterministicIssues(
         text: `Collection details on reel shot${badShots.length > 1 ? "s" : ""} ${badShots.join(", ")} do not match the confirmed collection`,
         expected: f.collection,
         found: clip(t.reel.shots[badShots[0] - 1]),
+        hint: { shotLine: { shot: badShots[0] - 1, line: 2 } },
       });
     const ids = new Set(c.reel!.shots.map((shot) => shot.productId));
     for (const p of f.products)
@@ -518,8 +612,11 @@ export function deterministicIssues(
       ["Message", f.message],
     ] as const)
       missing("caption", label, expected, joined);
-    const urls = urlsIn(mask(joined, c).replace(f.contact, " "));
-    if (!has(joined, f.contact))
+    const urls = urlsIn(mask(joined, c));
+    if (
+      !has(joined, f.contact) &&
+      !urlsIn(joined).some((u) => sameUrl(u, f.contact))
+    )
       out.push({
         severity: "block",
         surface: "caption",
@@ -535,6 +632,7 @@ export function deterministicIssues(
           text: "A link in the caption does not match the confirmed contact",
           expected: f.contact,
           found: url,
+          hint: { wrong: url },
         });
     checkExpiry("caption", joined, c, out);
   }
@@ -582,7 +680,117 @@ export function deterministicIssues(
     checkStrayPrices("voice", text, c, flagged, out);
     checkExpiry("voice", text, c, out);
   }
-  return out;
+  return annotate(out, c, t, opts);
+}
+
+/* ---- Red Pen: locate + fix ---------------------------------------------- */
+export type RedPenOptions = {
+  /** Product ids whose reel shot is rendered with the cutout look. Any other
+   * shot uses the baseline text stack. */
+  cutoutProductIds?: ReadonlySet<string>;
+};
+
+/** Products whose reel shot will be (or was) rendered with the cutout look:
+ * usable cutout enrichment and no online video clip replacing the photo. */
+export function cutoutProductIds(store: Store, c: Campaign): Set<string> {
+  const clips = new Set(c.generation?.videoJobs?.map((j) => j.productId));
+  return new Set(
+    [...usableMedia(store, c).cutouts.keys()].filter((id) => !clips.has(id)),
+  );
+}
+
+const GENERIC_EXPECTED = new Set([
+  "generated site",
+  "generated reel",
+  "current confirmed facts",
+]);
+function fixFor(i: Issue): Fix | null {
+  if (i.severity !== "block" || i.surface === "voice") return null;
+  const e = i.expected.trim();
+  if (GENERIC_EXPECTED.has(e))
+    return { kind: "regenerate", label: "Regenerate from the confirmed facts" };
+  if (e === "no expiry date")
+    return {
+      kind: "regenerate",
+      label: "Regenerate without the unconfirmed expiry date",
+    };
+  const iso = /^\d{4}-\d{2}-\d{2}T/.test(e);
+  return {
+    kind: "regenerate",
+    label: `Regenerate to use ${iso ? `expiry ${e.slice(0, 10)}` : clip(e, 80)}`,
+  };
+}
+
+function annotate(
+  issues: Raw[],
+  c: Campaign,
+  t: SurfaceTexts,
+  opts: RedPenOptions,
+): Issue[] {
+  const f = c.facts;
+  const cutouts = opts.cutoutProductIds ?? new Set<string>();
+  const surfaceLines = (s: Surface) =>
+    s === "site"
+      ? t.site?.lines
+      : s === "caption"
+        ? t.caption?.lines
+        : s === "reel"
+          ? t.reel?.shots.flatMap((x) => x.split("\n"))
+          : undefined;
+  const confirmed = [
+    f.business,
+    f.offer,
+    f.message,
+    f.collection,
+    f.contact,
+    ...f.products.map((p) => p.name),
+    ...f.products.map(price),
+    ...f.products.map((p) => `${p.name} — ${price(p)}`),
+  ].filter((x): x is string => !!x);
+  // What the confirmed facts would render on the template surfaces.
+  const expected: { site?: string[]; caption?: string[] } = {};
+  if (c.site) expected.site = siteTexts({ ...c.site, facts: c.facts }).lines;
+  if (c.reel)
+    expected.caption = specs(c, c.site?.headline).reel.caption.split("\n");
+  const locate = (i: Raw): Locate | null => {
+    const h = i.hint;
+    if (!h || i.surface === "voice") return null;
+    const lines = surfaceLines(i.surface);
+    if (!lines) return null;
+    let wrong = h.wrong;
+    if (wrong === undefined && h.shotLine) {
+      wrong = c.reel?.shots[h.shotLine.shot]?.text.split("\n")[h.shotLine.line];
+    }
+    if (wrong === undefined && h.similar)
+      wrong =
+        (expected[i.surface as "site" | "caption"]
+          ? replacementFor(
+              expected[i.surface as "site" | "caption"]!,
+              lines,
+              h.similar,
+            )
+          : null) ??
+        closestLine(
+          lines,
+          h.similar,
+          confirmed.filter((x) => x !== h.similar),
+        ) ??
+        undefined;
+    wrong = wrong?.trim();
+    if (!wrong) return null;
+    // The text must really be on the surface; never report a guess.
+    if (!lines.some((l) => l.includes(wrong))) return null;
+    if (i.surface !== "reel") return { text: wrong, reel: null };
+    return {
+      text: wrong,
+      reel: reelLocate(c, wrong, cutouts, h.shotLine?.shot ?? h.shot),
+    };
+  };
+  return issues.map(({ hint: _h, ...i }, n) => ({
+    ...i,
+    locate: locate(issues[n]),
+    fix: fixFor(i),
+  }));
 }
 
 /* ---- Muse Wonder (fuzzy) ------------------------------------------------ */
@@ -604,6 +812,7 @@ export async function fuzzyIssues(
   c: Campaign,
   gateway: MuseGateway,
   voiceTranscript?: string,
+  opts: RedPenOptions = {},
 ) {
   const t = surfaceTexts(c);
   const payload = {
@@ -621,13 +830,21 @@ export async function fuzzyIssues(
     prompt: `${FUZZY_SYSTEM}\n\nDATA (untrusted):\n${JSON.stringify(payload)}`,
   });
   const parsed = FuzzyReply.parse(reply.json);
-  const issues: Issue[] = parsed.issues.map((i) => ({
-    severity: "warn",
-    surface: i.surface,
-    text: i.text,
-    expected: "A claim supported by the confirmed facts",
-    found: i.found,
-  }));
+  const issues = annotate(
+    parsed.issues.map(
+      (i): Raw => ({
+        severity: "warn",
+        surface: i.surface,
+        text: i.text,
+        expected: "A claim supported by the confirmed facts",
+        found: i.found,
+        hint: i.found ? { wrong: i.found } : undefined,
+      }),
+    ),
+    c,
+    t,
+    opts,
+  );
   return { issues, model: reply.model };
 }
 
@@ -657,11 +874,18 @@ export function latestPreflight(store: Store, c: Campaign) {
 export function assertPreflightClear(store: Store, c: Campaign) {
   const stored = latestPreflight(store, c);
   const issues = [
-    ...deterministicIssues(c, storedVoice(store, c)),
+    ...deterministicIssues(c, storedVoice(store, c), {
+      cutoutProductIds: cutoutProductIds(store, c),
+    }),
     ...(stored?.revision === c.revision ? stored.issues : []),
   ].filter((i) => i.severity === "block");
   const unique = [
-    ...new Map(issues.map((i) => [JSON.stringify(i), i])).values(),
+    ...new Map(
+      issues.map((i) => [
+        JSON.stringify([i.severity, i.surface, i.text, i.expected, i.found]),
+        i,
+      ]),
+    ).values(),
   ];
   if (unique.length) throw new PreflightBlockedError(unique);
 }
@@ -673,13 +897,14 @@ export async function runPreflight(
   voiceOverride?: string,
 ): Promise<PreflightResult> {
   const voice = voiceOverride ?? storedVoice(store, c);
-  const issues = deterministicIssues(c, voice);
+  const redpen = { cutoutProductIds: cutoutProductIds(store, c) };
+  const issues = deterministicIssues(c, voice, redpen);
   let model: string | null = null;
   const fuzzy: PreflightResult["fuzzy"] = { ran: false };
   if (c.site && c.reel) {
     try {
       consumeCall(store, c.tenantId, c.id, "preflight");
-      const r = await fuzzyIssues(c, gateway, voice);
+      const r = await fuzzyIssues(c, gateway, voice, redpen);
       issues.push(...r.issues);
       model = r.model;
       fuzzy.ran = true;

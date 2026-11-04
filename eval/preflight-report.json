@@ -1,0 +1,1420 @@
+{
+  "generatedAt": "2026-11-04T05:19:18.977Z",
+  "node": "v22.19.0",
+  "bases": 12,
+  "mode": {
+    "live": true
+  },
+  "offline": {
+    "totals": {
+      "cases": 1657,
+      "byFamily": {
+        "control": 24,
+        "drift": 372,
+        "stale": 114,
+        "benign": 1111,
+        "debatable": 24,
+        "voice": 12
+      }
+    },
+    "detection": {
+      "drift_all_surfaces": {
+        "k": 312,
+        "n": 312,
+        "rate": 1,
+        "ci95": [
+          0.9878,
+          1
+        ]
+      },
+      "drift_by_surface": {
+        "caption": {
+          "k": 120,
+          "n": 120,
+          "rate": 1,
+          "ci95": [
+            0.969,
+            1
+          ]
+        },
+        "reel": {
+          "k": 72,
+          "n": 72,
+          "rate": 1,
+          "ci95": [
+            0.9493,
+            1
+          ]
+        },
+        "site": {
+          "k": 120,
+          "n": 120,
+          "rate": 1,
+          "ci95": [
+            0.969,
+            1
+          ]
+        }
+      },
+      "drift_by_kind": {
+        "business": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "collection": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "contact": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "contact_extended": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "currency": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "offer": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "price_down": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "price_up": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "product_name": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "valid_until": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        }
+      },
+      "drift_by_kind_surface": {
+        "business @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "business @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "collection @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "collection @ reel": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "collection @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "contact @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "contact @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "contact_extended @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "contact_extended @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "currency @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "currency @ reel": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "currency @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "offer @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "offer @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_down @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_down @ reel": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_down @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_up @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_up @ reel": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_up @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "product_name @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "product_name @ reel": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "product_name @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "valid_until @ caption": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "valid_until @ reel": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "valid_until @ site": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        }
+      },
+      "stale_campaign_level": {
+        "k": 114,
+        "n": 114,
+        "rate": 1,
+        "ci95": [
+          0.9674,
+          1
+        ]
+      },
+      "stale_by_kind": {
+        "business": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "collection": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "contact": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "currency": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "message": {
+          "k": 6,
+          "n": 6,
+          "rate": 1,
+          "ci95": [
+            0.6097,
+            1
+          ]
+        },
+        "offer": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_down": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "price_up": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "product_name": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "valid_until": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        }
+      },
+      "voice_wrong_price": {
+        "k": 12,
+        "n": 12,
+        "rate": 1,
+        "ci95": [
+          0.7575,
+          1
+        ]
+      },
+      "extension_probes_by_kind": {
+        "business_extended @ caption": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "business_extended @ site": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "offer_extended @ caption": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "offer_extended @ site": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        }
+      },
+      "partial_probes_by_kind": {
+        "collection_one_of_two @ site": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        }
+      }
+    },
+    "falseAlarms": {
+      "controls": {
+        "k": 0,
+        "n": 24,
+        "rate": 0,
+        "ci95": [
+          0,
+          0.138
+        ]
+      },
+      "benign_all": {
+        "k": 0,
+        "n": 1111,
+        "rate": 0,
+        "ci95": [
+          0,
+          0.0034
+        ]
+      },
+      "benign_by_surface": {
+        "site": {
+          "k": 0,
+          "n": 335,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0113
+          ]
+        },
+        "reel": {
+          "k": 0,
+          "n": 251,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0151
+          ]
+        },
+        "caption": {
+          "k": 0,
+          "n": 380,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.01
+          ]
+        },
+        "voice": {
+          "k": 0,
+          "n": 145,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0258
+          ]
+        }
+      },
+      "benign_by_kind": {
+        "trailing_spaces": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "leading_spaces": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "double_spaces": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "tabs": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "nbsp": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "uppercase": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "lowercase": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "dash_style": {
+          "k": 0,
+          "n": 18,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1759
+          ]
+        },
+        "price_symbol": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_code_nospace": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_code_lower": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_code_after": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_symbol_space": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_one_decimal": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_symbol_nodecimals": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_code_nodecimals": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_symbol_slash_dash": {
+          "k": 0,
+          "n": 36,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.0964
+          ]
+        },
+        "price_rs_dot": {
+          "k": 0,
+          "n": 27,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1246
+          ]
+        },
+        "price_rs_nodot": {
+          "k": 0,
+          "n": 27,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1246
+          ]
+        },
+        "price_rs_glued": {
+          "k": 0,
+          "n": 27,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1246
+          ]
+        },
+        "price_rupees_word": {
+          "k": 0,
+          "n": 27,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1246
+          ]
+        },
+        "crlf": {
+          "k": 0,
+          "n": 24,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.138
+          ]
+        },
+        "dash_en_to_em": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "bullet_prefix": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "emoji_prefix": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "headline_rewrite": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "contact_host_uppercase": {
+          "k": 0,
+          "n": 24,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.138
+          ]
+        },
+        "contact_default_port": {
+          "k": 0,
+          "n": 24,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.138
+          ]
+        },
+        "contact_scheme_uppercase": {
+          "k": 0,
+          "n": 24,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.138
+          ]
+        },
+        "expiry_day_month_long": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "expiry_day_month_short": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "expiry_month_day_comma": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "expiry_ordinal": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "expiry_iso_date": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "expiry_zero_padded": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "contact_path_trailing_slash": {
+          "k": 0,
+          "n": 22,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.1487
+          ]
+        },
+        "voice_symbol": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "voice_code_nospace": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "voice_code_lower": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "voice_code_after": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "voice_symbol_space": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "voice_one_decimal": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "voice_symbol_nodecimals": {
+          "k": 0,
+          "n": 11,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2588
+          ]
+        },
+        "voice_code_nodecimals": {
+          "k": 0,
+          "n": 11,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2588
+          ]
+        },
+        "voice_symbol_slash_dash": {
+          "k": 0,
+          "n": 11,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2588
+          ]
+        },
+        "voice_rs_dot": {
+          "k": 0,
+          "n": 9,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2991
+          ]
+        },
+        "voice_rs_nodot": {
+          "k": 0,
+          "n": 9,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2991
+          ]
+        },
+        "voice_rs_glued": {
+          "k": 0,
+          "n": 9,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2991
+          ]
+        },
+        "voice_rupees_word": {
+          "k": 0,
+          "n": 9,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2991
+          ]
+        },
+        "price_indian_grouping": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "price_western_grouping": {
+          "k": 0,
+          "n": 12,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.2425
+          ]
+        },
+        "voice_indian_grouping": {
+          "k": 0,
+          "n": 2,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.6576
+          ]
+        },
+        "voice_western_grouping": {
+          "k": 0,
+          "n": 2,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.6576
+          ]
+        },
+        "contact_root_slash_toggle": {
+          "k": 0,
+          "n": 2,
+          "rate": 0,
+          "ci95": [
+            0,
+            0.6576
+          ]
+        }
+      },
+      "debatable_by_kind": {
+        "price_without_currency": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        },
+        "contact_tracking_param": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "ci95": [
+            0.7575,
+            1
+          ]
+        }
+      }
+    },
+    "locate": {
+      "exact_text_among_detected_drift": {
+        "k": 312,
+        "n": 312,
+        "rate": 1,
+        "ci95": [
+          0.9878,
+          1
+        ]
+      },
+      "by_kind": {
+        "business": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "collection": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "contact": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "contact_extended": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "currency": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "offer": {
+          "k": 24,
+          "n": 24,
+          "rate": 1,
+          "ci95": [
+            0.862,
+            1
+          ]
+        },
+        "price_down": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "price_up": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "product_name": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        },
+        "valid_until": {
+          "k": 36,
+          "n": 36,
+          "rate": 1,
+          "ci95": [
+            0.9036,
+            1
+          ]
+        }
+      },
+      "reel_shot_correct_among_boxed": {
+        "k": 72,
+        "n": 72,
+        "rate": 1,
+        "ci95": [
+          0.9493,
+          1
+        ]
+      },
+      "invariant_violations": 0
+    },
+    "failures": {
+      "missedDrift": [],
+      "missedStale": [],
+      "missedVoice": [],
+      "falseAlarmControls": [],
+      "falseAlarmBenign": [],
+      "invariantViolations": []
+    }
+  },
+  "live": {
+    "model": "muse-wonder-1.0",
+    "calls": 10,
+    "errors": 0,
+    "claim_any_caption_warning": {
+      "k": 7,
+      "n": 7,
+      "rate": 1,
+      "ci95": [
+        0.6457,
+        1
+      ]
+    },
+    "claim_warning_names_the_claim": {
+      "k": 7,
+      "n": 7,
+      "rate": 1,
+      "ci95": [
+        0.6457,
+        1
+      ]
+    },
+    "claim_locate_exact": {
+      "k": 7,
+      "n": 7,
+      "rate": 1,
+      "ci95": [
+        0.6457,
+        1
+      ]
+    },
+    "control_any_warning": {
+      "k": 0,
+      "n": 3,
+      "rate": 0,
+      "ci95": [
+        0,
+        0.5615
+      ]
+    },
+    "note": "Wonder findings are warnings only (never block). Control campaigns here are the unmodified deterministic captions.",
+    "results": [
+      {
+        "id": "live/claim/organic",
+        "kind": "claim",
+        "claim": "organic",
+        "base": "bakery",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": [
+          {
+            "surface": "caption",
+            "text": "Quality claim that products are made with 100% organic ingredients is not supported by confirmed facts",
+            "found": "Made with 100% organic ingredients.",
+            "locateText": "Made with 100% organic ingredients."
+          }
+        ]
+      },
+      {
+        "id": "live/claim/free_delivery",
+        "kind": "claim",
+        "claim": "free_delivery",
+        "base": "jewellery",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": [
+          {
+            "surface": "caption",
+            "text": "Delivery promise not in confirmed facts",
+            "found": "Free delivery across India.",
+            "locateText": "Free delivery across India."
+          }
+        ]
+      },
+      {
+        "id": "live/claim/half_off",
+        "kind": "claim",
+        "claim": "half_off",
+        "base": "sweets",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": [
+          {
+            "surface": "caption",
+            "text": "invented discount and urgency not in confirmed facts",
+            "found": "50% off today only!",
+            "locateText": "50% off today only!"
+          }
+        ]
+      },
+      {
+        "id": "live/claim/award",
+        "kind": "claim",
+        "claim": "award",
+        "base": "plants",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": [
+          {
+            "surface": "caption",
+            "text": "Award claim not supported by confirmed facts",
+            "found": "Award-winning craftsmanship.",
+            "locateText": "Award-winning craftsmanship."
+          }
+        ]
+      },
+      {
+        "id": "live/claim/health",
+        "kind": "claim",
+        "claim": "health",
+        "base": "ink",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": [
+          {
+            "surface": "caption",
+            "text": "Unsupported health claim that the product is clinically proven to boost immunity",
+            "found": "Clinically proven to boost immunity.",
+            "locateText": "Clinically proven to boost immunity."
+          }
+        ]
+      },
+      {
+        "id": "live/claim/best",
+        "kind": "claim",
+        "claim": "best",
+        "base": "round-price",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": [
+          {
+            "surface": "caption",
+            "text": "Unsupported award/quality claim: voted best in city is not in confirmed facts",
+            "found": "Voted the best in the city.",
+            "locateText": "Voted the best in the city."
+          }
+        ]
+      },
+      {
+        "id": "live/claim/scarcity",
+        "kind": "claim",
+        "claim": "scarcity",
+        "base": "usd-coffee",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": [
+          {
+            "surface": "caption",
+            "text": "Unsupported stock/scarcity claim",
+            "found": "Only 3 left in stock.",
+            "locateText": "Only 3 left in stock."
+          }
+        ]
+      },
+      {
+        "id": "live/control/bakery",
+        "kind": "control",
+        "base": "bakery",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": []
+      },
+      {
+        "id": "live/control/jewellery",
+        "kind": "control",
+        "base": "jewellery",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": []
+      },
+      {
+        "id": "live/control/plants",
+        "kind": "control",
+        "base": "plants",
+        "ok": true,
+        "model": "muse-wonder-1.0",
+        "warnings": []
+      }
+    ]
+  },
+  "notes": [
+    "Offline numbers cover deterministic exact-match rules only; fuzzy (Wonder) detection is evaluated only in the live section.",
+    "Cases share base campaigns, so Wilson intervals assume independence and are optimistic.",
+    "Surface text variants for the site are applied to the rendered site text; reel and caption variants edit the stored reel spec."
+  ]
+}

@@ -52,6 +52,7 @@ const Scene = z.object({
     differences: z.array(z.string().max(500)).max(20),
   }),
 });
+const Plate = z.object({ image_png_b64: z.string().min(1) });
 const JsonReply = z.object({
   json: z.record(z.string(), z.unknown()),
   model: z.string().max(100),
@@ -253,6 +254,30 @@ export class MuseGateway {
       cutout: r.cutout_png_b64 ? decodePng(r.cutout_png_b64, "cutout") : null,
     };
   }
+  /** Union of several concepts (the product plus its visible parts) cut out as one piece. */
+  async segmentMulti(image: Buffer, concepts: string[]): Promise<SegmentResult> {
+    const list = concepts.map((c) => c.trim().slice(0, 80)).filter(Boolean).slice(0, 4);
+    if (!list.length)
+      throw new GatewayError("At least one concept is required", "bad_request");
+    const form = new FormData();
+    form.set("image", new Blob([new Uint8Array(image)]), "image");
+    form.set("concepts", JSON.stringify(list));
+    const r = await this.call(
+      "/v1/segment_multi",
+      { method: "POST", body: form },
+      150000,
+      Segment,
+    );
+    return {
+      found: r.found,
+      concept: r.concept,
+      coverage: r.coverage,
+      bbox: r.bbox,
+      size: r.size,
+      overlay: r.overlay_png_b64 ? decodePng(r.overlay_png_b64, "overlay") : null,
+      cutout: r.cutout_png_b64 ? decodePng(r.cutout_png_b64, "cutout") : null,
+    };
+  }
   async scene(image: Buffer, scene: string): Promise<SceneResult> {
     const form = new FormData();
     form.set("image", new Blob([new Uint8Array(image)]), "image");
@@ -268,6 +293,26 @@ export class MuseGateway {
       faithful: r.fidelity.faithful,
       differences: r.fidelity.differences,
     };
+  }
+  /** Text-only Muse Image call: a product-free backdrop (PNG) for compositing. */
+  async plate(backdrop: string): Promise<Buffer> {
+    const text = backdrop.replace(/\s+/g, " ").trim();
+    if (text.length < 3 || text.length > 300)
+      throw new GatewayError(
+        "Backdrop description must be 3 to 300 characters",
+        "bad_request",
+      );
+    const r = await this.call(
+      "/v1/plate",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ backdrop: text }),
+      },
+      180000,
+      Plate,
+    );
+    return decodePng(r.image_png_b64, "backdrop plate");
   }
   json(request: JsonRequest) {
     if (request.prompt.length > 120000)

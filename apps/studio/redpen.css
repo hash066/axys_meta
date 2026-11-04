@@ -1,0 +1,467 @@
+/* Red Pen: hand-drawn marks over the real artifacts.
+   Colours: ink red #b3261e is 6.3:1 on white and 5.9:1 on the cream site;
+   on the dark reel the ink is #ff8f84 (9:1 on #150e0b). Marks never rely on colour alone:
+   each has a number, a note in words, and a matching row in the list. */
+.redpen {
+  --rp-ok-list: #17562f;
+}
+.rp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.rp-actions button {
+  min-height: 44px;
+}
+.rp-help {
+  margin: 0 0 16px;
+  max-width: 70ch;
+}
+
+.rp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+.rp-side {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+}
+.rp-fig {
+  margin: 0;
+  min-width: 0;
+}
+.rp-fig > figcaption {
+  margin-bottom: 8px;
+  color: #4d5c52;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* A host is the artifact plus its overlay. The overlay clips to it. */
+.rp-host {
+  --rp-ink: #b3261e;
+  --rp-halo: rgba(251, 245, 233, 0.92);
+  --rp-ok: #1b6b3a;
+  --rp-badge-text: #fff;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #dfe3d8;
+  border-radius: 8px;
+  background: #fffefa;
+}
+.rp-host.rp-dark {
+  --rp-ink: #ff8f84;
+  --rp-halo: rgba(10, 6, 4, 0.82);
+  --rp-halo-line: rgba(10, 6, 4, 0.7);
+  --rp-ok: #7be39b;
+  --rp-badge-text: #2a0a07;
+  background: #0d0a09;
+  border-color: #2b211c;
+}
+.rp-scroll {
+  max-height: 560px;
+  overflow: auto;
+  background: #fbf5e9;
+}
+.rp-scroll:focus-visible {
+  outline: 3px solid #b1752c;
+  outline-offset: -3px;
+}
+.rp-site .merchant-site {
+  min-height: 100%;
+}
+.rp-fig-reel .rp-host {
+  max-width: 280px;
+  margin: 0 auto;
+}
+.rp-reel-stage {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  background: #0d0a09;
+}
+.rp-reel-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0d0a09;
+}
+.rp-noreel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 20px;
+  color: #d8cfc4;
+  font-size: 13px;
+  text-align: center;
+}
+.rp-shots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.rp-shots button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.rp-small {
+  margin: 8px 0 0;
+  font-size: 12px;
+  text-align: center;
+}
+.rp-fig-caption {
+  margin-bottom: 26px;
+}
+.rp-caption {
+  margin: 0;
+  padding: 22px 250px 26px 20px;
+  font: 15px/1.75 Georgia, serif;
+  color: #2c3a31;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---- the pen ---- */
+.rp-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.rp-layer.is-hidden {
+  opacity: 0;
+}
+.rp-layer.is-busy .rp-mark {
+  opacity: 0.55;
+}
+.rp-ink {
+  fill: none;
+  stroke: var(--rp-ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.5s;
+}
+.rp-mark .rp-ink.rp-under {
+  stroke: var(--rp-halo-line, transparent);
+  stroke-width: 7;
+}
+.rp-mark .rp-ink.rp-leader {
+  stroke-width: 2;
+}
+.rp-strike {
+  stroke-width: 2.8;
+}
+.rp-mark.active .rp-ink:not(.rp-under) {
+  stroke-width: 4.5;
+}
+.rp-mark.active .rp-ellipse {
+  filter: drop-shadow(0 0 3px var(--rp-ink));
+}
+.rp-mark.fixed .rp-ink:not(.rp-under) {
+  stroke: var(--rp-ok);
+}
+.rp-hl {
+  fill: rgba(179, 38, 30, 0.14);
+  transition: fill 0.5s;
+}
+.rp-mark.fixed .rp-hl {
+  fill: rgba(27, 107, 58, 0.15);
+}
+.rp-note {
+  fill: var(--rp-ink);
+  stroke: var(--rp-halo);
+  stroke-width: 4px;
+  paint-order: stroke;
+  stroke-linejoin: round;
+  font-weight: 700;
+  transition: fill 0.5s;
+}
+.rp-mark.fixed .rp-note {
+  fill: var(--rp-ok);
+}
+.rp-badge circle {
+  fill: var(--rp-ink);
+  transition: fill 0.5s;
+}
+.rp-badge text {
+  fill: var(--rp-badge-text);
+  font: 700 11px Arial, sans-serif;
+}
+.rp-mark.fixed .rp-badge circle {
+  fill: var(--rp-ok);
+}
+
+/* draw-in */
+.rp-draw,
+.rp-tick {
+  stroke-dasharray: 1 2;
+}
+.rp-draw {
+  animation: rp-draw 0.8s cubic-bezier(0.35, 0.6, 0.3, 1) both;
+  animation-delay: var(--d, 0s);
+}
+.rp-strike.rp-draw {
+  animation-delay: calc(var(--d, 0s) + 0.6s);
+}
+.rp-notegrp {
+  animation: rp-fade 0.5s ease-out both;
+  animation-delay: calc(var(--d, 0s) + 0.85s);
+}
+.rp-badge {
+  animation: rp-fade 0.4s ease-out both;
+  animation-delay: var(--d, 0s);
+}
+.rp-tick {
+  opacity: 0;
+}
+.rp-mark.fixed .rp-tick {
+  animation: rp-draw 0.6s ease-out both;
+  animation-delay: 0.35s;
+}
+.rp-mark.fixed .rp-strike.rp-draw {
+  animation: rp-out 0.4s ease-out both;
+}
+.rp-mark.fixed .rp-notegrp {
+  animation-delay: 0.6s;
+}
+@keyframes rp-draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+@keyframes rp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes rp-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rp-draw,
+  .rp-notegrp,
+  .rp-badge,
+  .rp-mark.fixed .rp-tick,
+  .rp-mark.fixed .rp-strike.rp-draw,
+  .rp-mark.fixed .rp-notegrp {
+    animation: none;
+  }
+  .rp-mark.fixed .rp-tick {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  .rp-mark.fixed .rp-strike {
+    opacity: 0;
+  }
+  .rp-draw {
+    stroke-dasharray: none;
+  }
+  .rp-ink,
+  .rp-note,
+  .rp-hl,
+  .rp-layer {
+    transition: none;
+  }
+}
+
+/* ---- the list that mirrors the marks ---- */
+.rp-list-h {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+.rp-fixed-count {
+  color: #17562f;
+}
+.rp-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rp-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #dfe3d8;
+  background: #fff;
+  color: #26392f;
+  font-weight: 400;
+  text-align: left;
+}
+.rp-item:hover {
+  filter: none;
+  border-color: #b3261e;
+}
+.rp-li.fixed .rp-item:hover {
+  border-color: #1b6b3a;
+}
+.rp-item[aria-current="true"] {
+  border-color: #b3261e;
+  box-shadow: 0 0 0 2px rgba(179, 38, 30, 0.25);
+}
+.rp-li.fixed .rp-item[aria-current="true"] {
+  border-color: #1b6b3a;
+  box-shadow: 0 0 0 2px rgba(27, 107, 58, 0.25);
+}
+.rp-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #b3261e;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.rp-li.fixed .rp-num {
+  background: #1b6b3a;
+}
+.rp-body {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.rp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.rp-state {
+  font-size: 12px;
+  font-weight: 700;
+}
+.rp-state.block {
+  color: #8a2a1a;
+}
+.rp-state.warn {
+  color: #7a4a0a;
+}
+.rp-state.ok {
+  color: #17562f;
+}
+.rp-text {
+  overflow-wrap: anywhere;
+}
+.rp-diff {
+  color: #3f4d44;
+}
+.rp-where {
+  color: #566358;
+  font-size: 12px;
+}
+
+/* ---- staged scenario page ---- */
+.rp-demo {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+}
+.rp-demo-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 28px;
+  margin-bottom: 16px;
+}
+.rp-demo-head > div:nth-child(2) {
+  flex: 1 1 280px;
+}
+.rp-demo-head h1 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+}
+.rp-demo-head .eyebrow {
+  margin: 0 0 4px;
+}
+.rp-demo-head .wordmark {
+  color: #234735;
+}
+.rp-demo-note {
+  max-width: 76ch;
+  margin: 0 0 22px;
+}
+
+@media (max-width: 860px) {
+  .rp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rp-scroll {
+    max-height: 460px;
+  }
+  .rp-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  .rp-actions button {
+    flex: 1 1 140px;
+  }
+  .redpen .panel-heading {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+@media (max-width: 860px) {
+  .rp-caption {
+    padding-right: 150px;
+  }
+}
+@media (max-width: 500px) {
+  .rp-caption {
+    padding: 18px 126px 22px 14px;
+    font-size: 14px;
+  }
+  .redpen.panel {
+    padding: 16px;
+  }
+  .rp-demo {
+    padding: 18px 14px 60px;
+  }
+}
+
+/* Caveat (SIL Open Font License 1.1), bundled so the server's content-security policy never blocks it. */
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("/fonts/caveat-latin.woff2") format("woff2");
+}

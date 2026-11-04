@@ -134,6 +134,66 @@
 .lens-actions button {
   min-height: 44px;
 }
+.lens-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  min-width: 0;
+  font-weight: 600;
+}
+.lens-check input {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  accent-color: #234735;
+}
+/* Backdrop plates */
+.lens-plates {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid #e0e3d8;
+}
+.lens-plates-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.lens-plates-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.plate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.plate {
+  margin: 0;
+}
+.plate img,
+.plate .img-missing {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #cbd1c8;
+}
+.plate figcaption {
+  margin-top: 10px;
+}
+.plate-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid #98c9a6;
+  border-radius: 20px;
+  background: #e6f4ea;
+  color: #17562f;
+  font-size: 11px;
+  font-weight: 800;
+}
 .progress {
   margin: 0 0 18px;
 }
@@ -555,4 +615,172 @@ button[aria-disabled="true"] {
   .rec-meter i {
     transition: none;
   }
+}
+
+/* Identity (Muse Spark direction) */
+.lens-identity {
+  margin: 0 0 24px;
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #14231b 0%, #1e3328 100%);
+  color: #eef3ea;
+  border: 1px solid #2f4a3a;
+  box-shadow: 0 10px 28px rgba(20, 35, 27, 0.18);
+}
+.ident-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.ident-head h3 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #eef3ea;
+}
+.ident-head h3 strong {
+  font-weight: 800;
+  color: #fff;
+  border-bottom: 2px solid #8fd0a5;
+}
+.ident-head .model-chip {
+  background: #8fd0a5;
+  color: #0e1c14;
+  border-color: #8fd0a5;
+}
+.ident-cat {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #8fd0a5;
+  color: #cfeedb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ident-desc {
+  margin: 10px 0 0;
+  color: #c4d4c8;
+  font-size: 14px;
+}
+.ident-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 36px;
+  margin-top: 16px;
+}
+.lens-identity h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a9bfb0;
+  font-weight: 800;
+}
+.swatches,
+.ident-chips,
+.ident-phrases ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.swatch {
+  display: grid;
+  place-items: end start;
+  min-width: 104px;
+  height: 64px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font: 700 13px/1 ui-monospace, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+.ident-chips li {
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.ident-k {
+  color: #a9bfb0;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.ident-phrases {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1.5px dashed #6f8f7b;
+  border-radius: 10px;
+}
+.ident-phrases h4 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ident-deco {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f1d98a;
+  color: #3b2d00;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+.ident-phrases li {
+  font: 800 22px/1.1 Impact, "Arial Narrow Bold", "Arial Black", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.ident-phrases small {
+  display: block;
+  margin-top: 10px;
+  color: #a9bfb0;
+}
+.plate-purpose {
+  display: inline-block;
+  margin: 0 6px 6px 0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #234735;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.plate-purpose i {
+  font-style: normal;
+  font-weight: 600;
+  text-transform: none;
+  color: #cfe3d6;
+}
+@media (max-width: 520px) {
+  .lens-identity {
+    padding: 16px;
+  }
+  .ident-cat {
+    margin-left: 0;
+  }
+  .ident-head h3 {
+    font-size: 18px;
+  }
+  .swatch {
+    min-width: 92px;
+  }
+}
+
+.ident-phrases ul {
+  gap: 6px 24px;
 }

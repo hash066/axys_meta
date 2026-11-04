@@ -297,3 +297,63 @@ def reasoning_json(client, model_key, prompt, images=None, effort="low"):
     if model_key == "spark":
         return spark_json(client, prompt, images), SPARK_MODEL
     raise ValueError("model must be 'wonder' or 'spark'")
+
+
+def generate_plate(client, backdrop: str) -> bytes:
+    """Text-only Muse Image call: an empty backdrop (no product) that a real product cutout is composited onto."""
+    prompt = (
+        f"Photographic backdrop for a product shot: {backdrop}. The centre of the frame must be an empty clear surface "
+        "with space for a product. No products, no objects in the centre, no people, no text, no logos. "
+        "Soft natural light, shallow depth of field, vertical composition."
+    )
+    resp = client.responses.create(
+        model=IMAGE_MODEL,
+        input=prompt,
+        tools=[{"type": "image_generation", "output_format": "png"}],
+        store=False,
+    )
+    for item in _field(resp, "output") or []:
+        if _field(item, "type") != "image_generation_call":
+            continue
+        result = _field(item, "result")
+        if isinstance(result, str):
+            try:
+                return base64.b64decode(result, validate=True)
+            except (binascii.Error, ValueError) as exc:
+                raise RuntimeError("Muse Image returned invalid image data.") from exc
+    raise RuntimeError("Muse Image returned no image.")
+
+
+def union_masks(masks, size):
+    """OR several SAM masks and fill small gaps/holes so a composite product (cake + raspberries) cuts out as one piece."""
+    import numpy as np
+    from PIL import Image, ImageFilter
+
+    width, height = size
+    combined = np.zeros((height, width), dtype=np.uint8)
+    for m in masks:
+        if m is not None:
+            combined |= (m > 0).astype(np.uint8)
+    if not combined.any():
+        return None
+    img = Image.fromarray(combined * 255, mode="L")
+    k = max(5, int(min(width, height) / 120) // 2 * 2 + 1)  # odd kernel, about 0.8% of the short side
+    img = img.filter(ImageFilter.MaxFilter(k)).filter(ImageFilter.MinFilter(k))  # morphological close
+    closed = np.array(img) > 0
+    # fill enclosed holes: flood the outside from the border, everything not reached is inside
+    outside = np.zeros_like(closed)
+    h, w = closed.shape
+    stack = [(0, 0)]
+    seen = np.zeros_like(closed)
+    border = [(0, x) for x in range(w)] + [(h - 1, x) for x in range(w)] + [(y, 0) for y in range(h)] + [(y, w - 1) for y in range(h)]
+    stack = [pt for pt in border if not closed[pt]]
+    for pt in stack:
+        seen[pt] = True
+    while stack:
+        y, x = stack.pop()
+        for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+            if 0 <= ny < h and 0 <= nx < w and not seen[ny, nx] and not closed[ny, nx]:
+                seen[ny, nx] = True
+                stack.append((ny, nx))
+    filled = closed | ~seen
+    return filled.astype(np.uint8)

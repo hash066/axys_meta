@@ -17,6 +17,14 @@ export const FIXTURE =
   new URLSearchParams(location.search).get("fixture") === "meta";
 const FIXTURE_ERROR =
   FIXTURE && new URLSearchParams(location.search).get("fx") === "error";
+/** `?fixture=meta&scenario=stale` stages the Red Pen scenario (stale price on every surface). */
+export const SCENARIO_STALE =
+  FIXTURE && new URLSearchParams(location.search).get("scenario") === "stale";
+export const STALE_ID = "fx-stale-demo";
+/** `?fixture=meta&scenario=command` stages the whole Say it loop (say -> diff -> apply -> red pen -> fix). */
+export const SCENARIO_COMMAND =
+  FIXTURE && new URLSearchParams(location.search).get("scenario") === "command";
+export const COMMAND_ID = "fx-command-demo";
 
 export function FixtureBadge() {
   if (!FIXTURE) return null;
@@ -44,7 +52,7 @@ const sleep = (ms: number, signal?: AbortSignal) =>
     });
   });
 
-async function liveRequest(
+export async function liveRequest(
   path: string,
   init: RequestInit & { json?: unknown } = {},
 ): Promise<any> {
@@ -81,7 +89,7 @@ async function liveRequest(
 }
 
 /* ---------- fixture image generation (canvas placeholders) ---------- */
-type FxKind = "orig" | "overlay" | "cutout" | "hero";
+type FxKind = "orig" | "overlay" | "cutout" | "hero" | "plate";
 const fxCache = new Map<string, string>();
 const HUES = [24, 200, 330, 95, 260, 45];
 
@@ -149,6 +157,49 @@ function fixtureImage(kind: FxKind, idx: number, scene = 0): string {
   } else if (kind === "cutout") {
     ctx.clearRect(0, 0, w, h);
     drawProduct(ctx, w, h, idx, "");
+  } else if (kind === "plate") {
+    // A backdrop with NO product: wall, window light, empty tabletop.
+    const wall = ctx.createLinearGradient(0, 0, 0, h * 0.64);
+    wall.addColorStop(0, scene === 1 ? "#2b2438" : "#efe3cf");
+    wall.addColorStop(1, scene === 1 ? "#4a3d62" : "#d2bf9f");
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, w, h);
+    const glow = ctx.createRadialGradient(
+      w * 0.2,
+      h * 0.18,
+      10,
+      w * 0.2,
+      h * 0.18,
+      w * 0.8,
+    );
+    glow.addColorStop(0, "rgba(255,244,214,.75)");
+    glow.addColorStop(1, "rgba(255,244,214,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+    const top = ctx.createLinearGradient(0, h * 0.62, 0, h);
+    top.addColorStop(0, scene === 1 ? "#5d4a3a" : "#b98c5a");
+    top.addColorStop(1, scene === 1 ? "#2a1f17" : "#7c5a37");
+    ctx.fillStyle = top;
+    ctx.fillRect(0, h * 0.62, w, h * 0.38);
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    ctx.fillRect(0, h * 0.62, w, 3);
+    if (scene === 3) {
+      // hero plate: tinted studio gradient with a soft floor, nothing on it
+      const g = ctx.createRadialGradient(w / 2, h * 0.42, 20, w / 2, h * 0.5, w * 0.95);
+      g.addColorStop(0, "#f4dcc2");
+      g.addColorStop(0.6, "#c4793f");
+      g.addColorStop(1, "#3b2a20");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    } else if (scene === 2) {
+      // detail plate: close texture, nothing on it
+      ctx.fillStyle = "#8a6034";
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 38; i++) {
+        ctx.fillStyle = `rgba(${i % 2 ? "60,36,14" : "230,190,140"},.${(i % 5) + 1}2)`;
+        ctx.fillRect(0, i * 16 + ((i * 7) % 9), w, 2 + (i % 3));
+      }
+    }
   } else {
     const g = ctx.createRadialGradient(w / 2, h * 0.45, 20, w / 2, h / 2, w);
     g.addColorStop(0, scene ? "#f3e7ff" : "#fff6e3");
@@ -166,6 +217,7 @@ function fixtureImage(kind: FxKind, idx: number, scene = 0): string {
     overlay: "FIXTURE OVERLAY",
     cutout: "FIXTURE CUTOUT",
     hero: "FIXTURE STUDIO SHOT",
+    plate: "FIXTURE BACKDROP PLATE (no product)",
   }[kind];
   ctx.fillStyle = "rgba(10,10,10,.78)";
   ctx.fillRect(0, h - 34, w, 34);
@@ -177,10 +229,78 @@ function fixtureImage(kind: FxKind, idx: number, scene = 0): string {
   return url;
 }
 
+/**
+ * Fixture reel frame (9:16 canvas). The returned box is derived from the
+ * geometry actually drawn here, so the fixture never invents a position.
+ */
+const reelCache = new Map<string, { src: string; box: number[] }>();
+export function fixtureReelFrame(
+  shot: number,
+  name: string,
+  priceText: string,
+  collection: string,
+) {
+  const key = [shot, name, priceText, collection].join("|");
+  const hit = reelCache.get(key);
+  if (hit) return hit;
+  const w = 540,
+    h = 960;
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext("2d");
+  const out = { src: "", box: [0.3, 0.64, 0.4, 0.07] };
+  if (!ctx) return out;
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "#3b2418");
+  g.addColorStop(1, "#150e0b");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  if (shot === 0) {
+    drawProduct(ctx, w, h * 0.78, 0, "");
+    ctx.fillStyle = "#fbf5e9";
+    ctx.font = "700 44px Georgia, serif";
+    ctx.fillText(name.slice(0, 22), w / 2, h * 0.6);
+    ctx.font = "800 46px Arial, sans-serif";
+    const tw = ctx.measureText(priceText).width;
+    const px = w / 2 - tw / 2 - 26,
+      pw = tw + 52,
+      py = h * 0.645,
+      ph = 70;
+    ctx.fillStyle = "#e8b04a";
+    ctx.beginPath();
+    ctx.roundRect(px, py, pw, ph, 35);
+    ctx.fill();
+    ctx.fillStyle = "#2a170c";
+    ctx.fillText(priceText, w / 2, py + 50);
+    out.box = [px / w, py / h, pw / w, ph / h];
+  } else {
+    ctx.fillStyle = "#fbf5e9";
+    ctx.font = "600 30px Arial, sans-serif";
+    ctx.fillText("COLLECT", w / 2, h * 0.44);
+    ctx.font = "700 40px Georgia, serif";
+    ctx.fillText(collection.slice(0, 26), w / 2, h * 0.5);
+    out.box = [0.1, 0.46, 0.8, 0.06];
+  }
+  ctx.textAlign = "left";
+  ctx.fillStyle = "rgba(255,255,255,.12)";
+  ctx.fillRect(0, h - 40, w, 40);
+  ctx.fillStyle = "#f3efe6";
+  ctx.font = "bold 13px Arial, sans-serif";
+  ctx.fillText("FIXTURE REEL FRAME — not model output", 14, h - 15);
+  out.src = c.toDataURL("image/png");
+  reelCache.set(key, out);
+  return out;
+}
+
 /** Resolve an asset id from the server to an image URL, or null if malformed. */
 export function assetSrc(id: unknown): string | null {
   if (typeof id !== "string") return null;
-  const f = /^fixture:(orig|overlay|cutout|hero):(\d{1,2}):(\d)$/.exec(id);
+  const f = /^fixture:(orig|overlay|cutout|hero|plate):(\d{1,2}):(\d)$/.exec(
+    id,
+  );
   if (f) return FIXTURE ? fixtureImage(f[1] as FxKind, +f[2], +f[3]) : null;
   return /^[A-Za-z0-9_-]{8,64}$/.test(id)
     ? `/api/v1/assets/${encodeURIComponent(id)}`
@@ -211,13 +331,107 @@ type LensHero = {
   faithful: boolean | null;
   differences: string[];
 };
+type PlatePurpose = "hero" | "context" | "detail";
+type LensPlate = {
+  assetId: string;
+  backdrop: string;
+  purpose: PlatePurpose | null;
+};
+export const CATEGORIES = [
+  "footwear",
+  "apparel",
+  "jewellery",
+  "homeware",
+  "food",
+  "beverage",
+  "beauty",
+  "electronics",
+  "furniture",
+  "toys",
+  "stationery",
+  "plants",
+  "other",
+] as const;
+export const MOODS = [
+  "warm",
+  "minimal",
+  "bold",
+  "playful",
+  "luxe",
+  "earthy",
+  "fresh",
+] as const;
+/** Muse Spark's reading of the product photo (Addendum 3). Decoration and prompts only; never facts. */
+type Direction = {
+  /** "spark" = read by Muse Spark; "fallback" = deterministic default after a failed call. */
+  source: "spark" | "fallback" | null;
+  category: (typeof CATEGORIES)[number];
+  subject: string;
+  descriptors: string[];
+  palette: string[];
+  mood: (typeof MOODS)[number] | null;
+  motion: "calm" | "punchy" | null;
+  worlds: { purpose: PlatePurpose; backdrop: string }[];
+  phrases: string[];
+};
 type Enrichment = {
   campaignId: string;
   products: LensProduct[];
   heroes: LensHero[];
+  plates: LensPlate[];
+  direction: Direction | null;
   models: string[];
   generatedAt: string;
 };
+
+const PURPOSES = ["hero", "context", "detail"] as const;
+const purposeOf = (v: unknown): PlatePurpose | null =>
+  PURPOSES.includes(v as PlatePurpose) ? (v as PlatePurpose) : null;
+/** Visible text only: no control characters, collapsed whitespace. Rendered as React text, never markup. */
+const clean = (v: unknown, max: number) =>
+  str(v, max * 2)
+    .replace(/[\p{Cc}<>]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+export function parseDirection(raw: unknown): Direction | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const d = raw as Record<string, unknown>;
+  const list = (v: unknown, n: number) => (Array.isArray(v) ? v.slice(0, n) : []);
+  const subject = clean(d.subject, 40);
+  const palette = list(d.palette, 3)
+    .filter((h): h is string => typeof h === "string" && HEX_RE.test(h))
+    .map((h) => h.toLowerCase());
+  const phrases = list(d.phrases, 3)
+    .map((p) => clean(p, 30))
+    .filter((p) => p && p.split(" ").length <= 3);
+  const worlds = list(d.worlds, 3)
+    .map((w: any) => ({
+      purpose: purposeOf(w?.purpose),
+      backdrop: clean(w?.backdrop, 240),
+    }))
+    .filter((w): w is Direction["worlds"][number] => !!w.purpose && !!w.backdrop);
+  const category = (CATEGORIES as readonly string[]).includes(d.category as string)
+    ? (d.category as Direction["category"])
+    : "other";
+  const out: Direction = {
+    source: d.source === "spark" || d.source === "fallback" ? d.source : null,
+    category,
+    subject,
+    descriptors: list(d.descriptors, 4).map((x) => clean(x, 24)).filter(Boolean),
+    palette,
+    mood: (MOODS as readonly string[]).includes(d.mood as string)
+      ? (d.mood as Direction["mood"])
+      : null,
+    motion: d.motion === "calm" || d.motion === "punchy" ? d.motion : null,
+    worlds,
+    phrases,
+  };
+  // nothing usable at all: show nothing rather than an empty card
+  return subject || palette.length || phrases.length || out.mood ? out : null;
+}
 
 function parseEnrichment(raw: any, campaignId: string): Enrichment {
   if (!raw || typeof raw !== "object" || raw.campaignId !== campaignId)
@@ -258,6 +472,15 @@ function parseEnrichment(raw: any, campaignId: string): Enrichment {
           .map((d: unknown) => str(d, 240))
           .filter(Boolean),
       })),
+    plates: (Array.isArray(raw.plates) ? raw.plates : [])
+      .slice(0, 6)
+      .map((p: any) => ({
+        assetId: idOf(p?.assetId) || "",
+        backdrop: str(p?.backdrop, 300),
+        purpose: purposeOf(p?.purpose),
+      }))
+      .filter((p: LensPlate) => p.assetId),
+    direction: parseDirection(raw.direction),
     models: (Array.isArray(raw.models) ? raw.models : [])
       .filter(
         (m: unknown) => typeof m === "string" && /^[\w.\-]{1,40}$/.test(m),
@@ -267,21 +490,57 @@ function parseEnrichment(raw: any, campaignId: string): Enrichment {
   };
 }
 
-type Issue = {
+export type Locate = {
+  text: string;
+  reel: { shot: number; box: [number, number, number, number] } | null;
+};
+export type IssueFix = { kind: "regenerate"; label: string };
+export type Issue = {
   severity: "block" | "warn";
   surface: "site" | "reel" | "caption" | "voice" | "other";
   text: string;
   expected: string;
   found: string;
+  /** Optional: where the wrong value sits on the artifact (Red Pen). */
+  locate: Locate | null;
+  /** Optional: the single honest remedy, if the server offers one. */
+  fix: IssueFix | null;
 };
-type Preflight = {
+export type Preflight = {
   campaignId: string;
   ok: boolean;
   issues: Issue[];
   model: string;
   checkedAt: string;
 };
-function parsePreflight(raw: any, campaignId: string): Preflight {
+function parseLocate(v: any): Locate | null {
+  if (!v || typeof v !== "object") return null;
+  const text = str(v.text, 200).trim();
+  let reel: Locate["reel"] = null;
+  const r = v.reel;
+  if (
+    r &&
+    typeof r === "object" &&
+    Number.isInteger(r.shot) &&
+    r.shot >= 0 &&
+    r.shot < 50 &&
+    Array.isArray(r.box) &&
+    r.box.length === 4 &&
+    r.box.every((n: unknown) => typeof n === "number" && Number.isFinite(n))
+  ) {
+    const [x, y, w, h] = r.box as number[];
+    // Anything outside the normalised frame is rejected, never clamped into a guess.
+    if (x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= 1.001 && y + h <= 1.001)
+      reel = { shot: r.shot, box: [x, y, w, h] };
+  }
+  return text || reel ? { text, reel } : null;
+}
+function parseFix(v: any): IssueFix | null {
+  return v && typeof v === "object" && v.kind === "regenerate"
+    ? { kind: "regenerate", label: str(v.label, 160) || "Regenerate" }
+    : null;
+}
+export function parsePreflight(raw: any, campaignId: string): Preflight {
   if (!raw || typeof raw !== "object" || raw.campaignId !== campaignId)
     throw new MetaError("The server returned an unexpected preflight result.");
   const surfaces = ["site", "reel", "caption", "voice"];
@@ -297,6 +556,8 @@ function parsePreflight(raw: any, campaignId: string): Preflight {
         text: str(i?.text, 500),
         expected: str(i?.expected, 300),
         found: str(i?.found, 300),
+        locate: parseLocate(i?.locate),
+        fix: parseFix(i?.fix),
       })),
     model: str(raw.model, 40),
     checkedAt: str(raw.checkedAt, 40),
@@ -308,10 +569,128 @@ export const blockCount = (s: PreflightState | undefined, c: Campaign) =>
     ? s.result.issues.filter((i) => i.severity === "block").length
     : 0;
 
+export const SURFACE_LABEL: Record<Issue["surface"], string> = {
+  site: "Website",
+  reel: "Reel",
+  caption: "Caption",
+  voice: "Voice brief",
+  other: "Other",
+};
+
+/** One request path for preflight, shared by the panel and the Red Pen fix flow. */
+export async function requestPreflight(
+  campaign: Campaign,
+  signal?: AbortSignal,
+): Promise<Preflight> {
+  const raw = FIXTURE
+    ? await fixtureRequest(
+        `/campaigns/${campaign.id}/preflight`,
+        { signal },
+        campaign,
+      )
+    : await liveRequest(`/campaigns/${campaign.id}/preflight`, {
+        method: "POST",
+        json: {},
+        signal,
+      });
+  return parsePreflight(raw, campaign.id);
+}
+
+export const sleepMs = sleep;
+
 const when = (iso: string) => {
   const d = new Date(iso);
   return iso && !Number.isNaN(d.getTime()) ? d.toLocaleString() : "";
 };
+
+/**
+ * Fixture preflight for the Say it scenario: a plain comparison of the confirmed
+ * facts with the facts the artifacts were generated from (what the real exact-match
+ * rules do), with positions taken from the geometry the fixture reel frame drew.
+ */
+function fixtureStaleIssues(campaign: Campaign) {
+  const art = campaign.site!.facts;
+  const money = (q: { currency: string; priceMinor: number }) =>
+    `${q.currency} ${(q.priceMinor / 100).toFixed(2)}`;
+  const issues: any[] = [];
+  const lead = art.products[0];
+  campaign.facts.products.forEach((p) => {
+    const was = art.products.find((x) => x.id === p.id);
+    if (
+      !was ||
+      (was.priceMinor === p.priceMinor && was.currency === p.currency)
+    )
+      return;
+    const expected = money(p),
+      found = money(was);
+    const fix = { kind: "regenerate", label: `Regenerate to use ${expected}` };
+    issues.push({
+      severity: "block",
+      surface: "site",
+      text: `The website shows a different price for ${p.name}.`,
+      expected,
+      found,
+      locate: { text: found, reel: null },
+      fix,
+    });
+    if (was.id === lead.id)
+      issues.push({
+        severity: "block",
+        surface: "reel",
+        text: `The reel text shows a different price for ${p.name}.`,
+        expected,
+        found,
+        locate: {
+          text: found,
+          reel: {
+            shot: 0,
+            box: fixtureReelFrame(0, was.name, found, art.collection).box,
+          },
+        },
+        fix,
+      });
+    issues.push({
+      severity: "block",
+      surface: "caption",
+      text: `The caption shows a different price for ${p.name}.`,
+      expected,
+      found,
+      locate: { text: found, reel: null },
+      fix,
+    });
+  });
+  if (campaign.facts.collection !== art.collection) {
+    const expected = campaign.facts.collection,
+      found = art.collection;
+    const fix = { kind: "regenerate", label: `Regenerate to use ${expected}` };
+    const tail = (surface: string, text: string, locate: any) =>
+      issues.push({
+        severity: "block",
+        surface,
+        text,
+        expected,
+        found,
+        locate,
+        fix,
+      });
+    tail("site", "The website shows a different collection time.", {
+      text: found,
+      reel: null,
+    });
+    tail("reel", "The reel shows a different collection time.", {
+      text: found,
+      reel: {
+        shot: 1,
+        box: fixtureReelFrame(1, lead.name, money(lead), found).box,
+      },
+    });
+    tail("caption", "The caption shows a different collection time.", {
+      text: found,
+      reel: null,
+    });
+  }
+  return issues;
+}
 
 /* ---------- fixture endpoint handlers ---------- */
 const fxRuns = new Map<string, number>();
@@ -342,8 +721,9 @@ async function fixtureRequest(
   if (m[2] === "enrichment") throw new MetaError("No enrichment yet.", 404);
   if (m[2] === "enrich") {
     await sleep(3500, signal);
-    const scenes =
-      Number(new URLSearchParams(path.split("?")[1]).get("scenes")) || 1;
+    const q = new URLSearchParams(path.split("?")[1]);
+    const scenes = Number(q.get("scenes")) || 1;
+    const withPlates = q.get("plates") !== "0";
     const ps = campaign.facts.products;
     return {
       campaignId: campaign.id,
@@ -374,11 +754,121 @@ async function fixtureRequest(
             ]
           : [],
       })),
+      plates: withPlates
+        ? [
+            {
+              assetId: "fixture:plate:0:3",
+              purpose: "hero",
+              backdrop:
+                "Warm terracotta studio gradient with a soft floor glow, empty centre",
+            },
+            {
+              assetId: "fixture:plate:0:0",
+              purpose: "context",
+              backdrop:
+                "Warm oak tabletop against a plaster wall, soft window light from the left, empty surface in the lower middle",
+            },
+            {
+              assetId: "fixture:plate:0:2",
+              purpose: "detail",
+              backdrop: "Close view of oiled oak grain, shallow depth, nothing on it",
+            },
+          ]
+        : [],
+      direction: withPlates
+        ? {
+            category: "homeware",
+            subject: "ceramic mug",
+            descriptors: ["glazed", "terracotta", "rounded handle"],
+            palette: ["#c4793f", "#f1e4cf", "#3b2a20"],
+            mood: "warm",
+            motion: "calm",
+            worlds: [
+              { purpose: "hero", backdrop: "Terracotta studio gradient, soft floor glow" },
+              { purpose: "context", backdrop: "Oak table by a window, morning light" },
+              { purpose: "detail", backdrop: "Close oak grain texture" },
+            ],
+            phrases: ["Made by hand", "Morning ritual"],
+          }
+        : undefined,
       models: ["sam-3.1", "muse-image-1.0", "muse-spark-1.3"],
       generatedAt: new Date().toISOString(),
     };
   }
   await sleep(1200, signal);
+  if (campaign.id === STALE_ID && campaign.site && campaign.reel) {
+    const money = (q: { currency: string; priceMinor: number }) =>
+      `${q.currency} ${(q.priceMinor / 100).toFixed(2)}`;
+    const prod = campaign.facts.products[0];
+    const expected = money(prod);
+    const found = money(campaign.site.facts.products[0]);
+    const warn = {
+      severity: "warn",
+      surface: "site",
+      text: "Headline claims “Best in the city”, which your facts do not support.",
+      expected: "No superlative claims",
+      found: "Best in the city",
+      locate: { text: "Best in the city", reel: null },
+      fix: null,
+    };
+    const issues =
+      expected === found
+        ? [warn]
+        : (() => {
+            const frame = fixtureReelFrame(0, prod.name, found, "");
+            const fix = {
+              kind: "regenerate",
+              label: `Regenerate to use ${expected}`,
+            };
+            return [
+              {
+                severity: "block",
+                surface: "site",
+                text: `The website shows a different price for ${prod.name}.`,
+                expected,
+                found,
+                locate: { text: found, reel: null },
+                fix,
+              },
+              {
+                severity: "block",
+                surface: "reel",
+                text: `The reel text shows a different price for ${prod.name}.`,
+                expected,
+                found,
+                locate: { text: found, reel: { shot: 0, box: frame.box } },
+                fix,
+              },
+              {
+                severity: "block",
+                surface: "caption",
+                text: `The caption shows a different price for ${prod.name}.`,
+                expected,
+                found,
+                locate: { text: found, reel: null },
+                fix,
+              },
+              warn,
+            ];
+          })();
+    return {
+      campaignId: campaign.id,
+      ok: !issues.some((i) => i.severity === "block"),
+      issues,
+      model: "muse-wonder-1.0",
+      checkedAt: new Date().toISOString(),
+    };
+  }
+  if (campaign.id === COMMAND_ID && campaign.site && campaign.reel) {
+    const issues = fixtureStaleIssues(campaign);
+    return {
+      campaignId: campaign.id,
+      ok: !issues.some((i) => i.severity === "block"),
+      issues,
+      model: "muse-wonder-1.0",
+      checkedAt: new Date().toISOString(),
+    };
+  }
   const n = (fxRuns.get(campaign.id) ?? 0) + 1;
   fxRuns.set(campaign.id, n);
   const p = campaign.facts.products[0];
@@ -396,6 +886,11 @@ async function fixtureRequest(
               text: `Reel text shows a different price for ${p.name}.`,
               expected: price(p.priceMinor),
               found: price(p.priceMinor + 5000),
+              locate: { text: price(p.priceMinor + 5000), reel: null },
+              fix: {
+                kind: "regenerate",
+                label: `Regenerate to use ${price(p.priceMinor)}`,
+              },
             },
             {
               severity: "block",
@@ -427,6 +922,116 @@ const MODEL_LABEL: Record<string, string> = {
 function ModelChip({ id, label }: { id?: string; label?: string }) {
   return (
     <span className="model-chip">{label || MODEL_LABEL[id || ""] || id}</span>
+  );
+}
+
+const PURPOSE_LABEL: Record<PlatePurpose, { name: string; hint: string }> = {
+  hero: { name: "Hero", hint: "studio backdrop" },
+  context: { name: "Context", hint: "lifestyle scene" },
+  detail: { name: "Detail", hint: "texture" },
+};
+function sortedPlates(plates: LensPlate[]) {
+  const rank = (p: LensPlate) => (p.purpose ? PURPOSES.indexOf(p.purpose) : 9);
+  return [...plates].sort((a, b) => rank(a) - rank(b));
+}
+
+/** Readable text colour for a swatch: black or white, whichever has the higher contrast. */
+function inkFor(hex: string) {
+  const c = [1, 3, 5].map((i) => {
+    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  const L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  return L > 0.179 ? "#111111" : "#ffffff";
+}
+
+function Identity({ d }: { d: Direction }) {
+  const subject = d.subject || "this product";
+  if (d.source === "fallback")
+    return (
+      <section className="lens-identity" aria-labelledby="lens-identity-h">
+        <div className="ident-head">
+          <ModelChip id="muse-spark-1.3" />
+          <h3 id="lens-identity-h">Muse Spark could not identify this product</h3>
+        </div>
+        <p className="ident-desc">
+          Axys used a neutral default look ({d.category}
+          {d.mood ? `, ${d.mood}` : ""}) with colours taken from your cutout.
+          Nothing below was read from the photo by a model, and no kinetic
+          phrases are used. Run Meta Lens again to retry.
+        </p>
+      </section>
+    );
+  return (
+    <section className="lens-identity" aria-labelledby="lens-identity-h">
+      <div className="ident-head">
+        <ModelChip id="muse-spark-1.3" />
+        <h3 id="lens-identity-h">
+          Muse Spark identified: <strong>{subject}</strong>
+        </h3>
+        <span className="ident-cat" title="Category">
+          {d.category}
+        </span>
+      </div>
+      {d.descriptors.length > 0 && (
+        <p className="ident-desc">
+          Seen in your photo: {d.descriptors.join(" · ")}
+        </p>
+      )}
+      <div className="ident-cols">
+        {d.palette.length > 0 && (
+          <div>
+            <h4 id="ident-pal-h">Palette from the photo</h4>
+            <ul className="swatches" aria-labelledby="ident-pal-h">
+              {d.palette.map((h) => (
+                <li
+                  key={h}
+                  className="swatch"
+                  style={{ background: h, color: inkFor(h) }}
+                >
+                  <span className="sr-only">Colour </span>
+                  {h.toUpperCase()}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {(d.mood || d.motion) && (
+          <div>
+            <h4 id="ident-style-h">Film style</h4>
+            <ul className="ident-chips" aria-labelledby="ident-style-h">
+              {d.mood && (
+                <li>
+                  <span className="ident-k">Mood</span> {d.mood}
+                </li>
+              )}
+              {d.motion && (
+                <li>
+                  <span className="ident-k">Motion</span> {d.motion}
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
+      {d.phrases.length > 0 && (
+        <div className="ident-phrases">
+          <h4 id="ident-ph-h">
+            Kinetic phrases{" "}
+            <span className="ident-deco">Decoration, not facts</span>
+          </h4>
+          <ul aria-labelledby="ident-ph-h">
+            {d.phrases.map((ph) => (
+              <li key={ph}>{ph}</li>
+            ))}
+          </ul>
+          <small>
+            Short mood words for the film. Prices, offers and dates never come
+            from here; they come only from your confirmed facts.
+          </small>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -525,6 +1130,7 @@ export function MetaLens({ campaign }: { campaign: Campaign }) {
   const [state, setState] = useState<"loading" | "idle" | "running">("loading");
   const [error, setError] = useState("");
   const [scenes, setScenes] = useState(1);
+  const [wantPlates, setWantPlates] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [announce, setAnnounce] = useState("");
   const abort = useRef<AbortController | undefined>(undefined);
@@ -571,12 +1177,15 @@ export function MetaLens({ campaign }: { campaign: Campaign }) {
     setState("running");
     setAnnounce("Meta Lens started. This can take a minute or more.");
     try {
-      const raw = await call(`/campaigns/${id}/enrich?scenes=${scenes}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}",
-        signal: ac.signal,
-      });
+      const raw = await call(
+        `/campaigns/${id}/enrich?scenes=${scenes}&plates=${wantPlates ? 1 : 0}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+          signal: ac.signal,
+        },
+      );
       const next = parseEnrichment(raw, id);
       setData(next);
       setAnnounce(
@@ -632,6 +1241,15 @@ export function MetaLens({ campaign }: { campaign: Campaign }) {
             <option value={2}>2 (more spend)</option>
           </select>
         </label>
+        <label className="inline-field lens-check">
+          <input
+            type="checkbox"
+            checked={wantPlates}
+            disabled={running}
+            onChange={(e) => setWantPlates(e.target.checked)}
+          />
+          Backdrop plates (no product in them)
+        </label>
         <button onClick={run} disabled={running || state === "loading"}>
           {running
             ? "Running Meta Lens…"
@@ -673,6 +1291,7 @@ export function MetaLens({ campaign }: { campaign: Campaign }) {
             {products.length > data.products.length &&
               "Some products were not part of this run."}
           </p>
+          {data.direction && <Identity d={data.direction} />}
           {data.products.map((p, i) => {
             const prod = products.find((x) => x.id === p.productId);
             const name = p.concept || prod?.name || "Product";
@@ -753,6 +1372,45 @@ export function MetaLens({ campaign }: { campaign: Campaign }) {
               </article>
             );
           })}
+          {data.plates.length > 0 && (
+            <section
+              className="lens-plates"
+              aria-labelledby={`lens-plates-h-${id}`}
+            >
+              <div className="lens-plates-head">
+                <h3 id={`lens-plates-h-${id}`}>Backdrop plates: hero, context, detail</h3>
+                <ModelChip id="muse-image-1.0" />
+              </div>
+              <p className="muted">
+                Muse Image paints the empty tabletop only. Your real product
+                cutout is placed on it in the reel, never regenerated.
+              </p>
+              <div className="plate-grid">
+                {sortedPlates(data.plates).map((pl, k) => (
+                  <figure className="plate" key={pl.assetId + k}>
+                    <SafeImg
+                      src={assetSrc(pl.assetId)}
+                      alt={`Muse Image ${pl.purpose ? PURPOSE_LABEL[pl.purpose].name.toLowerCase() + " " : ""}backdrop plate${pl.backdrop ? `: ${pl.backdrop}` : ""}. It contains no product.`}
+                    />
+                    <figcaption>
+                      {pl.purpose && (
+                        <span className={`plate-purpose p-${pl.purpose}`}>
+                          {PURPOSE_LABEL[pl.purpose].name}
+                          <i> · {PURPOSE_LABEL[pl.purpose].hint}</i>
+                        </span>
+                      )}
+                      <span className="plate-tag">No product in the plate</span>
+                      <span className="hero-scene">{pl.backdrop}</span>
+                      <small>
+                        Generated image. A backdrop only, so nothing on it can
+                        misstate your product.
+                      </small>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       )}
     </section>
@@ -762,21 +1420,18 @@ export function MetaLens({ campaign }: { campaign: Campaign }) {
 /* ================================================================== *
  * Preflight
  * ================================================================== */
-const SURFACE: Record<Issue["surface"], string> = {
-  site: "Website",
-  reel: "Reel",
-  caption: "Caption",
-  voice: "Voice brief",
-  other: "Other",
-};
+const SURFACE = SURFACE_LABEL;
 export function PreflightPanel({
   campaign,
   state,
   onResult,
+  autoRun,
 }: {
   campaign: Campaign;
   state: PreflightState | undefined;
   onResult: (s: PreflightState) => void;
+  /** Run once on mount when there is no result yet (used by the staged fixture scenario). */
+  autoRun?: boolean;
 }) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
@@ -796,18 +1451,7 @@ export function PreflightPanel({
     setError("");
     setAnnounce("Running preflight.");
     try {
-      const raw = FIXTURE
-        ? await fixtureRequest(
-            `/campaigns/${campaign.id}/preflight`,
-            { signal: ac.signal },
-            campaign,
-          )
-        : await liveRequest(`/campaigns/${campaign.id}/preflight`, {
-            method: "POST",
-            json: {},
-            signal: ac.signal,
-          });
-      const result = parsePreflight(raw, campaign.id);
+      const result = await requestPreflight(campaign, ac.signal);
       onResult({ result, revision: campaign.revision });
       const b = result.issues.filter((i) => i.severity === "block").length;
       const w = result.issues.length - b;
@@ -824,6 +1468,11 @@ export function PreflightPanel({
       setRunning(false);
     }
   }
+
+  useEffect(() => {
+    if (autoRun && !state) void run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const current =
     state && state.result.campaignId === campaign.id ? state : undefined;
@@ -973,9 +1622,16 @@ function toPcm16(chunks: Float32Array[], rate: number): Int16Array {
 export function VoiceRecorder({
   onTranscript,
   disabled,
+  variant = "card",
+  onError,
+  onPhase,
 }: {
   onTranscript: (text: string) => void;
   disabled?: boolean;
+  /** "inline": a round mic button only (used by the Say it bar). Errors go to onError. */
+  variant?: "card" | "inline";
+  onError?: (message: string) => void;
+  onPhase?: (phase: "idle" | "recording" | "sending") => void;
 }) {
   const [phase, setPhase] = useState<"idle" | "recording" | "sending">("idle");
   const [seconds, setSeconds] = useState(0);
@@ -996,6 +1652,14 @@ export function VoiceRecorder({
   >(undefined);
   const meter = useRef<HTMLSpanElement>(null);
   const alive = useRef(true);
+  useEffect(() => {
+    onPhase?.(phase);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+  useEffect(() => {
+    onError?.(error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error]);
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -1145,6 +1809,98 @@ export function VoiceRecorder({
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
   const ss = String(seconds % 60).padStart(2, "0");
+  if (variant === "inline")
+    return (
+      <div
+        className={`voice-inline ${phase}`}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && phase === "recording") {
+            e.stopPropagation();
+            discard();
+          }
+        }}
+      >
+        {phase === "recording" && (
+          <span className="vi-live">
+            <span className="rec-dot" aria-hidden="true" />
+            <span
+              className="rec-time"
+              role="timer"
+              aria-label="Recording length"
+            >
+              {mm}:{ss}
+            </span>
+            <span className="rec-meter" ref={meter} aria-hidden="true">
+              <i />
+            </span>
+            <button type="button" className="vi-discard" onClick={discard}>
+              Discard
+            </button>
+          </span>
+        )}
+        <button
+          type="button"
+          className={`vi-mic${phase === "recording" ? " is-rec" : ""}`}
+          aria-label={
+            phase === "recording"
+              ? "Stop recording and transcribe"
+              : phase === "sending"
+                ? "Transcribing"
+                : "Speak your change"
+          }
+          disabled={disabled || phase === "sending"}
+          onClick={() => (phase === "recording" ? void finish() : void start())}
+        >
+          {phase === "sending" ? (
+            <span className="vi-spin" aria-hidden="true" />
+          ) : phase === "recording" ? (
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <rect
+                x="6"
+                y="6"
+                width="12"
+                height="12"
+                rx="2.5"
+                fill="currentColor"
+              />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <rect
+                x="9"
+                y="3"
+                width="6"
+                height="12"
+                rx="3"
+                fill="currentColor"
+              />
+              <path
+                d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          )}
+        </button>
+        <div className="sr-only" role="status" aria-live="polite">
+          {announce}
+        </div>
+      </div>
+    );
   return (
     <div
       className="voice"

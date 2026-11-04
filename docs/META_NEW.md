@@ -6,8 +6,9 @@ removed since the Oct 19-26 build). This page lists the Node-side work.
 Studio UI files (`apps/studio/**`) and the Python gateway (`gateway/**`) are
 listed by their owners.
 
-Nothing here has been run against the live Meta API. Every test uses a local
-fake gateway (`tests/fake-gateway.ts`) on a random port.
+The automated tests use a local fake gateway (`tests/fake-gateway.ts`) on a
+random port. The same routes have also been run against the live Meta API: see
+`docs/EVIDENCE.md` and re-run with `node scripts/live-e2e.mjs`.
 
 ## Added files
 
@@ -85,3 +86,99 @@ No route injects fake data; the flag only keeps the previously generated artifac
 | Determinism | | Colour derivation, grain and layout are pure and seeded. The mp4 itself is not claimed byte-identical (x264 threading was not guaranteed before either). |
 | Site hero | `Site.tsx`, `apps/studio/site.css` | With a hero image the section gets `has-media` and the copy is wrapped in `.site-hero-copy`: two columns on desktop, stacked below 760px (no horizontal overflow at 390px), cutout on a soft plate with shadow, studio shot rounded with shadow, pill CTA. Markup without a hero is unchanged. |
 | Tests | `tests/render-polish.test.ts` | Colour maths, dominant colour, wrapping/fit, layout, scale, sanitising. |
+
+## Red Pen (the signature feature)
+
+The preflight does not only list problems; it marks up the merchant's actual website preview, reel frame and caption like an editor's red
+pen, then turns the marks green when "Fix with Axys" regenerates and preflight passes. Screenshots of a live run:
+`docs/evidence/redpen-live.png` (marked) and `docs/evidence/redpen-live-fixed.png` (fixed); reproduce with `node scripts/screenshot-redpen.mjs docs/evidence fix`.
+
+| Area | Where | What |
+|---|---|---|
+| Preflight issue data | `packages/meta/preflight.ts`, `packages/meta/redpen.ts` | Each issue gains `locate` (`{text, reel:{shot, box}\|null}\|null`) and `fix` (`{kind:"regenerate",label}\|null`); existing fields unchanged. Reel boxes are normalised 0..1, derived from the renderer's own layout maths; `null` when not derivable. Verified against a real rendered frame (box lands on the price pill). |
+| Fix semantics | same | Block issues on site/reel/caption get `regenerate`; Wonder warnings and seller-voice issues get `fix: null`. |
+| Strictness fixes found by the eval | `packages/meta/preflight.ts` | Dash/quote typography treated as equivalent (was 3.6% false alarms on benign variants); confirmed phrases match across whitespace; `:443` and a trailing path slash equal; a caption link that merely extends the confirmed URL is now blocked. |
+| Red Pen UI | `apps/studio/redpen.tsx`, `redpen.css`, `meta.tsx`, `main.tsx` | Hand-drawn animated marks anchored to DOM text (site, caption) and to the reel frame; numbered list mirrors the marks; aria-live announcements; reduced-motion respected; "Fix with Axys" regenerates, polls, re-runs preflight, marks turn green. `?fixture=meta&scenario=stale` stages it with no backend (badged fixture data). |
+| Handwriting font | `apps/studio/public/fonts/caveat-latin.woff2` | Caveat (SIL OFL 1.1), bundled so the server's content-security policy cannot block it. |
+| Mutation eval | `eval/*`, `npm run eval:preflight [-- --live]`, `tsconfig.json` (adds `eval`) | See below. |
+| Scripts | `scripts/live-e2e.mjs`, `scripts/screenshot-redpen.mjs` | Reproducible live run and Red Pen capture. |
+| Tests | `tests/meta-redpen.test.ts`, `tests/eval-metrics.test.ts`, assertions in `tests/meta-routes.test.ts` | |
+
+### Preflight mutation eval (`eval/preflight-report.html`)
+
+Offline, exact-match rules only, 1,657 cases from 12 generated campaigns (cases share base campaigns, so intervals are optimistic):
+drift in artifact text detected 312/312 (site 120/120, reel 72/72, caption 120/120); facts edited after generation blocked 114/114;
+wrong spoken price blocked 12/12; false alarms 0/24 on untouched controls and 0/1,111 on benign formatting variants
+(`₹`, `Rs`, "129 rupees", grouping, case, spacing, dashes, date formats, `:443`, trailing slash).
+`locate.text` matched the mutated text 312/312 and the reel box was on the correct shot 72/72.
+
+Known misses (measured, not fixed): an extended value (`"... Pvt Ltd"`, `"..., now 20% off"`) and one stale occurrence among two (stale hero
+line with a correct footer) are not detected because the check is "contains the confirmed value".
+
+Live (Muse Wonder, 10 calls, 0 errors): unsupported caption claims flagged 7/7 (organic, free delivery, 50% off, award-winning, immunity,
+"best in the city", "only 3 left"), 0/3 warnings on unmodified controls. Small sample.
+
+## Round 2: product-true scene reel + "Say it" commands
+
+Positioning: Meta's API has no video-generation model, so Axys does not compete on generative cinematography. It guarantees what generated
+video cannot: **the exact product pixels** (SAM cutout composited, never regenerated), **correct facts on every surface**, and a **say-it workflow**.
+
+| Area | Where | What |
+|---|---|---|
+| Backdrop plates | `gateway/server.py` `POST /v1/plate`, `gateway/meta_client.py` `generate_plate` | Text-only Muse Image call producing a product-free backdrop with an empty tabletop. |
+| Plate enrichment | `packages/meta/plate.ts`, `enrichment.ts`, `gateway.ts`, `server/app.ts` (`enrich?plates=0\|1`) | Muse Wonder writes a short backdrop description; code rejects descriptions naming the product or containing digits, links, markup or words like product/price/logo/text/hand; deterministic safe fallback. |
+| Scene reel | `packages/renderers/scene.ts`, `reel.ts`, `cutout.ts`, `server/engine.ts` (plumbing only) | Plate full-bleed with push-in and drift; SAM cutout grounded with a contact shadow and a cast shadow coloured from the plate; light sweep; parallax; text on a soft scrim with a contrast guarantee. Fallbacks: no plate -> cutout reel -> baseline. Text positions are identical to the cutout reel, so Red Pen boxes stay correct. |
+| Product fidelity metric | `packages/renderers/fidelity.ts`, `scene-fidelity.ts` | `measureProductFidelity`: MAD and SSIM of the on-frame product against the resampled source cutout, on the opaque interior. Measures compositing fidelity only (not whether the cutout is a faithful picture of the real product). Real run, 5 frames: mean MAD 6.10/255 (2.4%), mean SSIM 0.937; outside the light sweep MAD about 2.8 (1.1%), SSIM about 0.956; the light sweep itself raises MAD to about 12; control with the placement shifted 25 px: MAD 22.0, SSIM 0.48. |
+| Renderer robustness | `packages/renderers/reel.ts` | `command()` kills the whole ffmpeg process tree on timeout and has an opt-in stall watchdog; the main ffmpeg call is retried once if it stalls. (ffmpeg 8.1.2 was seen to stall intermittently on this machine.) |
+| Command parse | `packages/meta/command.ts`, `server/app.ts` `POST /campaigns/:id/command` | Muse Wonder turns a spoken or typed change into a strict patch (`offer, message, collection, validUntil, products[{ref, priceMinor, name}]`). Never applies. Rules in code: every number/date/word must come from the command text; unknown fields, absurd or zero prices, injection-like text, conflicting values and ambiguous "move the sale to <day>" are rejected with a clarifying question; 10x price jumps ask for confirmation. |
+| Command apply | `server/app.ts` `POST /campaigns/:id/command/apply`, shared `saveEdit()` | Accepts only a patch the server itself produced for that campaign and revision within the last hour (forged or altered patches get `not_verified`); applies with the `keepGenerated` semantics so artifacts stay and preflight/Red Pen mark them stale. |
+| Studio | `apps/studio/sayit.tsx`, `sayit.css`, `redpen.tsx`, `meta.tsx`, `meta.css`, `main.tsx` | Say it bar (type or voice) with diff cards and the quote of what was said; Apply auto-runs preflight so Red Pen marks every stale surface; sticky dock with Fix with Axys; plates shown in Meta Lens. `?fixture=meta&scenario=command` stages the loop without a backend (badged). |
+| Tests | `tests/meta-command.test.ts` (22), `tests/scene-math.test.ts`, `tests/scene-fidelity.test.ts`, `tests/scene-reel.test.ts`, `tests/fake-gateway.ts`, `tests/meta-routes.test.ts` | |
+
+Live command results (real Muse Wonder, gateway on 8766): "make the bread one forty nine" -> bread 50.00 -> 149.00; "price 1,499 rupees" -> parsed with a
+confirm question for the ~11.6x change; "change the offer to Diwali special" -> offer rewritten; "make it cheaper", "make it 149" (two products),
+"set the mug price to 0", "mug 149, no wait 199", and a prompt-injection attempt -> all rejected with a question; "the offer ends Sunday" ->
+end date resolved to Sun 8 Nov; "make the mug 149 and move the sale to Sunday" -> asks whether the collection day or the offer end is meant.
+End to end on a live campaign: "make the mug one ninety nine rupees" parsed with the quote "one ninety nine rupees", applied, and preflight then
+blocked the site, reel and caption (expected INR 199.00, found INR 129.00; reel box on the price pill).
+
+## Round 3: publishing and the feedback loop
+
+| Area | Where | What |
+|---|---|---|
+| Feedback logic | `packages/meta/feedback.ts` (new) | Normalises Instagram insights and website events into observations (unknown values are dropped, never zeroed); builds the revision prompt; `groundingProblem` requires the suggestion to quote at least one real observed number, rejects any number that was not observed, and rejects sales/revenue/causation wording; `fallbackProposal` summarises only the real numbers; `acceptRevision` keeps the confirmed offer, enforces `tool: propose_revision`, drops a product order with unknown ids. |
+| Feedback planner | `packages/inference/meta.ts` `proposeRevision` | No observations: no model call, returns `request_facts` ("nothing to base a revision on"). With observations: Muse Wonder proposes one change; an ungrounded or obedient reply is replaced by the deterministic summary (`trace.grounded`, `trace.fallbackReason`). Response is still `{proposal, trace}` plus `signal`. |
+| Route fix | `server/app.ts` `POST /campaigns/:id/revision` | Now calls `proposeRevision` with the app's configured gateway (it previously ignored the injected gateway and used the planner prompt, which answered "render this campaign" and never used the metrics). |
+| Publish loop test | `tests/meta-publish-loop.test.ts` (new) | The real Instagram adapter (`services/publishing/meta.ts`) run against a LOCAL fake Graph API: REELS container with the signed https video URL and caption, status polling, exactly one `media_publish`, receipt/permalink, insights pull, then a grounded revision proposal; asserts nothing is republished. Proves our request building and state machine, not that Instagram accepts our app. |
+| Feedback tests | `tests/meta-feedback.test.ts` (new, 7 tests) | Normalisation, grounding, forged or obedient replies, wrong tool, no-observation path. |
+| Readiness | `scripts/publish-readiness.mjs` | Lists which settings are missing before a real post (names and pass/fail only, never values). |
+
+Live check of the feedback planner (real Muse Wonder, fabricated-but-realistic numbers, NOT real Instagram data): with reach 420, likes 37, saves 2,
+site visits 58 and contact clicks 3 it proposed moving the contact link higher and said the numbers were too small to justify a major change,
+quoting saves 2, site_contact 3 and site_visit 58; with no observations it made no model call. Before the fix, the same inputs returned the
+generic "render this campaign" answer and ignored the numbers.
+
+## Round 4: product-aware studio film
+
+Reference: a polished AI-generated ad (generative live action with actors and voiceover). Meta's API cannot produce that, so Axys reproduces its
+ad grammar with the merchant's real product pixels: hero float, whip-pan with motion blur, macro close-up, bold kinetic type, a context scene and
+the branded facts card. Everything is driven by Muse Spark first identifying what the product is.
+
+| Area | Where | What |
+|---|---|---|
+| Product understanding | `packages/meta/direction.ts` (new), `enrichment.ts`, `server/app.ts` (`enrich?film=0\|1`) | One Muse Spark vision call returns category, subject, descriptors, **parts**, palette, mood, motion, up to 3 product-free backdrops (hero/context/detail) and kinetic phrases, validated fail-closed in code (phrases with digits, URLs, money, superlatives or claims are dropped; unknown enums, bad hex and unsafe backdrops fall back). Facts never come from the direction. Live on a mug, sneaker and cake: every field matched the photo. |
+| Composite cutouts | `gateway/server.py` `POST /v1/segment_multi`, `gateway/meta_client.py` `union_masks`, `packages/meta/gateway.ts` `segmentMulti`, `enrichment.ts` | SAM correctly cuts "the cake" without its raspberries (they are separate objects). Spark now names the visible parts (e.g. raspberries); the product and its parts are cut out as one union mask with small gaps and holes filled. If the union fails, the first cutout is kept and a warning is added. Live: cake cutout coverage 19% -> 28% and every raspberry is now in the reel (`docs/evidence/cake-sam-cutout-before.png` shows the original cut). |
+| Studio film | `packages/renderers/film.ts`, `film-art.ts`, `film-fidelity.ts`, `ffmpeg.ts`, `fonts/Anton-Regular.ttf` (OFL) | 10 s per product: hero float on a palette-tinted set, whip pans with real directional motion blur, macro close-up chosen by edge energy (never enlarged beyond 1.8x source pixels), context scene on a plate, kinetic phrases in Anton rendered as PNG layers (no drawtext), then the existing facts end card in the same positions (Red Pen boxes stay valid; facts visible from 7.6 s). Falls back film -> scene -> cutout -> baseline. Hero compositing fidelity on a real render: mean abs diff 4.3 to 6.3 /255, SSIM 0.87 to 0.91 (includes film grain and two H.264 encodes). |
+| Studio UI | `apps/studio/film.tsx`, `meta.tsx`, `redpen.tsx`, `main.tsx` | "Muse Spark identified: ..." panel (category, palette swatches, mood/motion, plates labelled by purpose, phrases marked "Decoration, not facts"); Red Pen seeks to the facts card of film reels; reels autoplay muted in view (reduced motion respected). |
+| Feedback loop | `packages/meta/feedback.ts`, `packages/inference/meta.ts` `proposeRevision` | See Round 3. |
+| Tests | `tests/meta-direction.test.ts` (19), `tests/film-math.test.ts`, `tests/film-reel.test.ts`, `tests/meta-feedback.test.ts`, `tests/meta-publish-loop.test.ts`, `tests_py/test_gateway.py` (8) | |
+
+Evidence: `docs/evidence/film-sneaker-frames.png` and `film-cake-frames.png` (frames at 0.6, 2.0, 3.6, 4.4/2.7, 5.6 and 8.6 s of live renders), reels in
+`docs/evidence/sneaker/` and `docs/evidence/cake/`. Honest limits against the reference: no people or live footage, no billboard or tiled-panel
+transitions, one backdrop per scene, the product floats slightly above the surface in the context scene, end card is a plain text block, no voiceover or music
+(Meta's voice model only transcribes speech).
+
+Kinetic type contrast (renderer, `film-art.ts` `chooseInk` / `chooseContextInk`): ink is chosen from the pixels actually behind each phrase (first option reaching 4.5:1, else
+the better ink plus an opposing outline and shadow, with a stronger top scrim on busy plates). Measured on live renders (ink vs the background pixels inside the text box,
+worst case / median): cake macro 7.57 / 10.55, cake context 2.67 / 7.23 (plain ink on the bright herb plate is worse, hence the outline), sneaker macro 6.88 / 10.88,
+sneaker context 2.36 / 6.13. Final suite: 189 Node tests and 8 gateway tests pass.

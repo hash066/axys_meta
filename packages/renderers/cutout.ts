@@ -25,15 +25,10 @@ export function alphaBounds(
 }
 
 /**
- * Crops a SAM cutout PNG to its visible pixels and fits it inside the reel's
- * product area. Returns null when the image is empty or unreadable so the
- * caller falls back to the plain photo shot.
+ * Crops a SAM cutout PNG to its visible pixels at native resolution (no
+ * resizing). Null when the image is empty, opaque-less or unreadable.
  */
-export async function prepareCutout(
-  png: Buffer,
-  maxWidth = 900,
-  maxHeight = 860,
-) {
+export async function cropToAlpha(png: Buffer) {
   try {
     const base = sharp(png, { limitInputPixels: 40000000 });
     const meta = await base.metadata();
@@ -61,6 +56,27 @@ export async function prepareCutout(
     return await sharp(png)
       .ensureAlpha()
       .extract({ left, top, width, height })
+      .png()
+      .toBuffer();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Crops a SAM cutout PNG to its visible pixels and fits it inside the reel's
+ * product area. Returns null when the image is empty or unreadable so the
+ * caller falls back to the plain photo shot.
+ */
+export async function prepareCutout(
+  png: Buffer,
+  maxWidth = 900,
+  maxHeight = 860,
+) {
+  const cropped = await cropToAlpha(png);
+  if (!cropped) return null;
+  try {
+    return await sharp(cropped)
       .resize(maxWidth, maxHeight, {
         fit: "inside",
         withoutEnlargement: false,

@@ -1,0 +1,90 @@
+{
+  "startedAt": "2026-11-04T12:20:46.844Z",
+  "steps": [
+    {
+      "name": "capabilities",
+      "at": "2026-11-04T12:20:46.887Z",
+      "muse": {
+        "available": true,
+        "keyConfigured": true,
+        "reachable": true,
+        "models": {
+          "spark": "muse-spark-1.3",
+          "wonder": "muse-wonder-1.0",
+          "image": "muse-image-1.0",
+          "sam": "sam-3.1",
+          "voice": "muse-voice-transcribe-1.0"
+        }
+      }
+    },
+    {
+      "name": "upload",
+      "at": "2026-11-04T12:20:46.955Z",
+      "status": 201
+    },
+    {
+      "name": "create",
+      "at": "2026-11-04T12:20:46.959Z",
+      "status": 201,
+      "state": "Draft"
+    },
+    {
+      "name": "enrich: SAM 3.1 + Muse Image + Spark fidelity",
+      "at": "2026-11-04T12:21:36.918Z",
+      "status": 200,
+      "seconds": 50,
+      "products": [
+        {
+          "found": true,
+          "coverage": 0.3051,
+          "cutout": true
+        }
+      ],
+      "heroes": [
+        {
+          "faithful": true,
+          "differences": []
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "name": "generate: Muse Wonder plan + FFmpeg reel",
+      "at": "2026-11-04T12:22:05.751Z",
+      "status": 202,
+      "state": "NeedsReview",
+      "aiPlanned": true,
+      "headline": "Weekend studio sale",
+      "reelRendered": true,
+      "reelLayout": [
+        "film"
+      ]
+    },
+    {
+      "name": "preflight (clean)",
+      "at": "2026-11-04T12:22:09.842Z",
+      "ok": true,
+      "issues": [],
+      "model": "muse-wonder-1.0",
+      "fuzzyRan": true
+    },
+    {
+      "name": "edit price INR 129 -> 149 (keepGenerated)",
+      "at": "2026-11-04T12:22:09.848Z",
+      "status": 200
+    },
+    {
+      "name": "preflight (stale price)",
+      "at": "2026-11-04T12:22:13.222Z",
+      "ok": false,
+      "issues": [
+        "block/site: expected INR 149.00 found INR 129.00",
+        "block/reel: expected INR 149.00 found INR 129.00",
+        "block/caption: expected INR 149.00 found INR 129.00"
+      ],
+      "model": "muse-wonder-1.0"
+    }
+  ],
+  "finishedAt": "2026-11-04T12:22:13.240Z",
+  "campaignId": "db6e0f26-9641-4d4d-9ab2-16750c030f7f"
+}

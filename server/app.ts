@@ -11,6 +11,7 @@ import { Store } from "./store.ts";
 import { Engine, type Asset } from "./engine.ts";
 import {
   CampaignInput,
+  type Input,
   hash,
   digest,
   type Campaign,
@@ -34,7 +35,7 @@ import {
 import type { WhatsAppDecision } from "./whatsapp-approval.ts";
 import { ingestWhatsApp, type WhatsAppDraft } from "./whatsapp.ts";
 import { hermesCommand } from "./hermes.ts";
-import { propose } from "../packages/inference/meta.ts";
+import { propose, proposeRevision } from "../packages/inference/meta.ts";
 import {
   GatewayError,
   MuseGateway,
@@ -46,17 +47,25 @@ import {
   latestPreflight,
   runPreflight,
 } from "../packages/meta/preflight.ts";
+import {
+  CommandError,
+  COMMAND_MAX_CHARS,
+  forgetVerified,
+  parseCommand,
+  verifyForApply,
+} from "../packages/meta/command.ts";
 import { installCrmRoutes } from "./crm.ts";
 import { Credits } from "./credits.ts";
 export function createApp(
   store = new Store(),
-  options: { gateway?: MuseGateway } = {},
+  options: { gateway?: MuseGateway; now?: () => number } = {},
 ) {
   const app = express(),
     engine = new Engine(store),
     credits = new Credits(store);
   if (options.gateway) engine.gateway = options.gateway;
   const gateway = () => engine.gateway;
+  const clock = () => (options.now ? options.now() : Date.now());
   /** New Meta routes answer `{data: X}` like the rest of the API and also
    * expose X's fields at the top level, matching docs/META_CONTRACT.md. */
   const reply = (res: express.Response, body: object, status = 200) =>
@@ -64,6 +73,10 @@ export function createApp(
   const origin = process.env.AXYS_ORIGIN || "http://127.0.0.1:4310";
   const production = process.env.NODE_ENV === "production";
   app.disable("x-powered-by");
+  // Behind a reverse proxy (Caddy in compose.yaml) the real client address is in
+  // X-Forwarded-For; without this every visitor shares the proxy's rate-limit bucket.
+  if (process.env.AXYS_TRUST_PROXY)
+    app.set("trust proxy", Number(process.env.AXYS_TRUST_PROXY) || 1);
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -191,7 +204,7 @@ export function createApp(
     legacyHeaders: false,
   });
   app.use(
-    ["/api/v1/voice", /^\/api\/v1\/campaigns\/[^/]+\/(enrich|preflight)$/],
+    ["/api/v1/voice", /^\/api\/v1\/campaigns\/[^/]+\/(enrich|preflight|command)$/],
     museLimit,
   );
   // 16 kHz mono PCM16, at most 60 s.
@@ -541,6 +554,32 @@ export function createApp(
     engine.save(c);
     res.status(201).json({ data: c });
   });
+  /** Save an edit to the confirmed facts. With `keepGenerated` (and existing
+   * artifacts) the previously generated artifacts stay so preflight can audit
+   * them against the new facts; approval stays refused until regenerated. */
+  const saveEdit = (old: Campaign, input: Input, keepGenerated: boolean) => {
+    store.put("history", old.tenantId, `${old.id}-${old.revision}`, old);
+    const keep = keepGenerated && !!old.site;
+    const c: Campaign = {
+      ...input,
+      id: old.id,
+      tenantId: old.tenantId,
+      revision: old.revision + 1,
+      state: keep ? "NeedsReview" : "Draft",
+      ...(keep
+        ? {
+            site: old.site,
+            reel: old.reel,
+            siteHash: old.siteHash,
+            videoHash: old.videoHash,
+            videoAssetId: old.videoAssetId,
+            videoPosterId: old.videoPosterId,
+          }
+        : {}),
+    };
+    engine.save(c);
+    return c;
+  };
   app.get("/api/v1/campaigns/:id", (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
     res.json({
@@ -562,30 +601,9 @@ export function createApp(
       throw new Error("This campaign changed. Reload before saving.");
     const input = CampaignInput.parse(req.body);
     checkAssets(res.locals.tenant, input);
-    store.put("history", old.tenantId, `${old.id}-${old.revision}`, old);
-    // Documented stale-price step: `?keepGenerated=true` saves the edit but
-    // keeps the previously generated artifacts so preflight can audit them
-    // against the new confirmed facts. Approval stays refused until regenerated.
-    const keep = req.query.keepGenerated === "true" && !!old.site;
-    const c: Campaign = {
-      ...input,
-      id: old.id,
-      tenantId: old.tenantId,
-      revision: old.revision + 1,
-      state: keep ? "NeedsReview" : "Draft",
-      ...(keep
-        ? {
-            site: old.site,
-            reel: old.reel,
-            siteHash: old.siteHash,
-            videoHash: old.videoHash,
-            videoAssetId: old.videoAssetId,
-            videoPosterId: old.videoPosterId,
-          }
-        : {}),
-    };
-    engine.save(c);
-    res.json({ data: c });
+    res.json({
+      data: saveEdit(old, input, req.query.keepGenerated === "true"),
+    });
   });
   app.post("/api/v1/campaigns/:id/generate", (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
@@ -639,12 +657,59 @@ export function createApp(
       .max(2)
       .default(1)
       .parse(req.query.scenes);
+    const plates =
+      req.query.plates === undefined
+        ? undefined
+        : z.coerce.number().int().min(0).max(1).parse(req.query.plates);
+    const film =
+      req.query.film === undefined
+        ? undefined
+        : z.coerce.number().int().min(0).max(1).parse(req.query.film);
     const {
       sources: _s,
       revision: _r,
       ...contract
-    } = await enrichCampaign(engine, gateway(), c, scenes);
+    } = await enrichCampaign(engine, gateway(), c, scenes, plates, film);
     reply(res, contract);
+  });
+  app.post("/api/v1/campaigns/:id/command", async (req, res) => {
+    const c = engine.get(res.locals.tenant, req.params.id);
+    const body = z
+      .object({ text: z.string().min(1).max(COMMAND_MAX_CHARS) })
+      .strict()
+      .parse(req.body ?? {});
+    reply(res, await parseCommand(store, gateway(), c, body.text, clock()));
+  });
+  app.post("/api/v1/campaigns/:id/command/apply", (req, res) => {
+    const old = engine.get(res.locals.tenant, req.params.id);
+    const body = z
+      .object({ patch: z.unknown(), revision: z.number().int().positive() })
+      .strict()
+      .parse(req.body ?? {});
+    if (["Publishing", "Generating"].includes(old.state))
+      throw new CommandError(
+        "Wait for generation or publication to settle before applying a change",
+        "busy",
+      );
+    if (body.revision !== old.revision)
+      throw new CommandError(
+        "This campaign changed. Reload and say the change again.",
+        "stale_revision",
+      );
+    const { patch, facts } = verifyForApply(store, old, body.patch, clock());
+    const input = CampaignInput.parse({
+      facts,
+      mode: old.mode,
+      layout: old.layout,
+      reelStyle: old.reelStyle,
+      brief: old.brief,
+      ...(old.voiceAssetId ? { voiceAssetId: old.voiceAssetId } : {}),
+    });
+    // Same semantics as PUT ?keepGenerated=true: artifacts stay, so preflight
+    // and Red Pen mark them stale until the merchant regenerates.
+    const saved = saveEdit(old, input, true);
+    forgetVerified(store, old, patch);
+    res.json({ data: saved });
   });
   app.get("/api/v1/campaigns/:id/enrichment", (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
@@ -876,7 +941,7 @@ export function createApp(
   });
   app.post("/api/v1/campaigns/:id/revision", async (req, res) => {
     const c = engine.get(res.locals.tenant, req.params.id);
-    const result = await propose(c, store, metrics(c));
+    const result = await proposeRevision(c, store, metrics(c), engine.gateway);
     store.put("proposal", c.tenantId, c.id, result);
     res.json({ data: result });
   });
@@ -998,6 +1063,10 @@ export function createApp(
       if (err instanceof PreflightBlockedError)
         return res.status(409).json({
           error: { code: err.code, message: err.message, issues: err.issues },
+        });
+      if (err instanceof CommandError)
+        return res.status(err.status).json({
+          error: { code: err.code, message: err.message },
         });
       if (err instanceof GatewayError)
         return res

@@ -27,6 +27,27 @@ export type FakeOptions = {
   json?: (body: any) => unknown;
   failScene?: boolean;
   failJson?: boolean;
+  failPlate?: boolean;
+  /** Reply to the Muse Spark vision "PRODUCT DIRECTION" call (default: a valid direction). */
+  direction?: unknown | ((body: any) => unknown);
+  failDirection?: boolean;
+  failSegmentMulti?: boolean;
+};
+
+/** A well-formed direction as Muse Spark would return it. */
+export const GOOD_DIRECTION = {
+  category: "homeware",
+  subject: "ceramic mug",
+  descriptors: ["glazed", "rounded", "speckled"],
+  palette: ["#c8b79a", "#7a5c3e"],
+  mood: "earthy",
+  motion: "calm",
+  worlds: [
+    { purpose: "hero", backdrop: "a seamless warm studio wall with soft gradient light" },
+    { purpose: "context", backdrop: "a sunlit wooden kitchen counter against a plaster wall" },
+    { purpose: "detail", backdrop: "a close view of rough speckled stoneware texture in soft raking light" },
+  ],
+  phrases: ["Made by hand", "Morning ritual"],
 };
 export async function startFakeGateway(options: FakeOptions = {}) {
   const calls: {
@@ -64,7 +85,7 @@ export async function startFakeGateway(options: FakeOptions = {}) {
         calls.push({ route, body: { bytes: raw.length } });
         return send(200, { transcript: state.transcript ?? "hello world" });
       }
-      if (route === "/v1/segment" || route === "/v1/scene") {
+      if (route === "/v1/segment" || route === "/v1/segment_multi" || route === "/v1/scene") {
         const form = await new Response(raw, {
           headers: { "content-type": String(req.headers["content-type"]) },
         }).formData();
@@ -72,11 +93,13 @@ export async function startFakeGateway(options: FakeOptions = {}) {
         for (const [k, v] of form.entries())
           fields[k] = typeof v === "string" ? v : `file:${v.size}`;
         calls.push({ route, fields });
-        if (route === "/v1/segment") {
+        if (route === "/v1/segment_multi" && state.failSegmentMulti)
+          return send(502, { error: "SAM 3.1: overloaded" });
+        if (route === "/v1/segment" || route === "/v1/segment_multi") {
           const found = state.segmentFound !== false;
           return send(200, {
             found,
-            concept: fields.concept,
+            concept: fields.concept ?? (fields.concepts ? JSON.parse(fields.concepts).join(" + ") : undefined),
             coverage: found ? 0.31 : 0,
             bbox: found ? [100, 100, 300, 300] : null,
             size: [400, 400],
@@ -95,9 +118,37 @@ export async function startFakeGateway(options: FakeOptions = {}) {
           },
         });
       }
+      if (route === "/v1/plate") {
+        const body = JSON.parse(raw.toString("utf8"));
+        calls.push({ route, body });
+        if (state.failPlate) return send(502, { error: "image model failed" });
+        return send(200, {
+          image_png_b64: (await png("#b89b72", 540, 960, false)).toString(
+            "base64",
+          ),
+        });
+      }
       if (route === "/v1/json") {
         const body = JSON.parse(raw.toString("utf8"));
         calls.push({ route, body });
+        if (
+          body.model === "spark" &&
+          Array.isArray(body.images_b64) &&
+          String(body.prompt).startsWith("PRODUCT DIRECTION")
+        ) {
+          if (state.failDirection)
+            return send(502, { error: "spark: model output was not JSON" });
+          const d = state.direction;
+          return send(200, {
+            json:
+              typeof d === "function"
+                ? (d as (b: any) => unknown)(body)
+                : d === undefined
+                  ? GOOD_DIRECTION
+                  : d,
+            model: "muse-spark-1.3",
+          });
+        }
         if (state.failJson)
           return send(502, { error: "model output was not JSON" });
         return send(200, {

@@ -43,3 +43,36 @@ def test_wonder_rejects_images(monkeypatch):
     monkeypatch.setenv("MODEL_API_KEY", "test")
     r = client.post("/v1/json", json={"model": "wonder", "prompt": "x", "images_b64": ["aGk="]})
     assert r.status_code == 400
+
+
+def test_plate_requires_key_and_valid_input(monkeypatch):
+    monkeypatch.delenv("MODEL_API_KEY", raising=False)
+    assert client.post("/v1/plate", json={"backdrop": "x"}).status_code == 422
+    r = client.post("/v1/plate", json={"backdrop": "a rustic kitchen shelf"})
+    assert r.status_code == 503 and "MODEL_API_KEY" in r.json()["error"]
+
+
+def test_union_masks_fills_gaps_and_holes():
+    import numpy as np
+
+    from gateway import meta_client as mc
+
+    a = np.zeros((120, 120), dtype=np.uint8)
+    a[30:90, 20:100] = 1            # main body
+    a[50:60, 40:50] = 0             # interior hole
+    b = np.zeros((120, 120), dtype=np.uint8)
+    b[12:30, 40:70] = 1             # a topping touching the body
+    merged = mc.union_masks([a, b, None], (120, 120))
+    assert merged[55, 45] == 1, "interior hole is filled"
+    assert merged[20, 55] == 1, "second concept is included"
+    assert merged[5, 5] == 0, "background stays empty"
+    assert mc.union_masks([None, None], (120, 120)) is None
+
+
+def test_segment_multi_validates_input(monkeypatch):
+    monkeypatch.delenv("MODEL_API_KEY", raising=False)
+    files = {"image": ("a.png", _png(), "image/png")}
+    assert client.post("/v1/segment_multi", files=files, data={"concepts": "not json"}).status_code == 400
+    assert client.post("/v1/segment_multi", files=files, data={"concepts": "[]"}).status_code == 400
+    r = client.post("/v1/segment_multi", files=files, data={"concepts": '["cake", "raspberries"]'})
+    assert r.status_code == 503

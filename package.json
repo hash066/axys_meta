@@ -17,7 +17,8 @@
     "preflight": "tsx scripts/providers-preflight.ts",
     "test:e2e": "playwright test",
     "lint": "prettier --check server packages services apps tests scripts *.ts",
-    "format": "prettier --write server packages services apps tests scripts *.ts"
+    "format": "prettier --write server packages services apps tests scripts *.ts",
+    "eval:preflight": "tsx eval/preflight-mutations.ts"
   },
   "dependencies": {
     "express": "5.1.0",
