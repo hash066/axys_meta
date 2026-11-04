@@ -1,0 +1,9 @@
+# Automatic HTTPS (Let's Encrypt) for $DOMAIN. DNS for the domain must point at this server and ports 80 and 443 must be open.
+{$DOMAIN} {
+	encode zstd gzip
+	# Campaign generation requests can take a couple of minutes; Caddy does not time out upstream responses by default.
+	reverse_proxy axys:4310
+	request_body {
+		max_size 25MB
+	}
+}

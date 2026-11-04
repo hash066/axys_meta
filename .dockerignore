@@ -1,0 +1,17 @@
+node_modules
+dist
+var
+var-test-*
+.git
+.env
+.env.*
+!.env.production.example
+*.log
+.claude
+docs/evidence
+eval
+tests
+tests_py
+scripts
+.pytest_cache
+__pycache__

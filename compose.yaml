@@ -1,0 +1,55 @@
+# Axys for Meta: gateway (Muse models) + app (Studio, API, FFmpeg) + Caddy (automatic HTTPS).
+# Only Caddy is published to the internet. The gateway and the app are reachable only on the internal network.
+#
+#   1. cp .env.production.example .env.production   (fill it in; never commit it)
+#   2. create a file named .env next to this one containing:  MODEL_API_KEY=...  and  DOMAIN=your.domain.example
+#   3. docker compose up -d --build
+services:
+  gateway:
+    build:
+      context: .
+      target: gateway
+    environment:
+      MODEL_API_KEY: ${MODEL_API_KEY:?set MODEL_API_KEY in .env}
+    restart: unless-stopped
+
+  axys:
+    build:
+      context: .
+      target: app
+    depends_on:
+      - gateway
+    env_file: .env.production
+    environment:
+      MUSE_GATEWAY_URL: http://gateway:8766
+      AXYS_DATA_DIR: /data
+      AXYS_TRUST_PROXY: "1"
+      AXYS_ORIGIN: https://${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - axys-data:/data
+    restart: unless-stopped
+    # Rendering is CPU and memory hungry; cap it so a bad render cannot take the whole box down.
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      - axys
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+
+volumes:
+  axys-data:
+  caddy-data:
+  caddy-config:
