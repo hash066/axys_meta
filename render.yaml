@@ -1,0 +1,28 @@
+# One-click deploy: Render dashboard -> New -> Blueprint -> pick this repository.
+# Secrets are asked for in the dashboard (sync: false); none are stored here.
+services:
+  - type: web
+    name: axys-for-meta
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard            # 2 GB RAM; renders use FFmpeg and image processing. Persistent disks need a paid plan.
+    healthCheckPath: /health
+    disk:
+      name: axys-data
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: MODEL_API_KEY
+        sync: false
+      - key: AXYS_ACCESS_KEYS   # tenantId:sha256(accessKey), see scripts/make-keys.mjs
+        sync: false
+      - key: AXYS_TOKEN_KEY
+        generateValue: true
+      - key: AXYS_MEDIA_KEY
+        generateValue: true
+      - key: AXYS_ORIGIN        # your public https address, e.g. https://axys-for-meta.onrender.com
+        sync: false
+      - key: AXYS_TRUST_PROXY
+        value: "1"
+      - key: AXYS_STARTER_CREDITS
+        value: "50"
