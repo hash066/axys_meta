@@ -55,4 +55,4 @@ The WhatsApp chat, the Instagram view and the insights numbers are SAMPLE.
 - Node worker: server/**, packages/**, tests/**, scripts/seed-whatsapp-draft.mts. UI worker: apps/studio/** only. Lead: gateway/**, docs/**, other scripts/**, public assets under apps/studio/public/demo/, README, recordings.
 - Never read or print .env* files. Never commit. Never call the live `/v1/speak` yourselves (credits are scarce); the lead generates the real audio files. Never start servers except: the UI worker may rebuild and restart the Studio
   (kill only the listener on 4310, then `AXYS_DATA_DIR=var/demo AXYS_STARTER_CREDITS=400 AXYS_DEMO_SAMPLES=true npm start` in the background); the gateway on 8766 must stay up.
-- Screenshots: headless Edge with Playwright like scripts/screenshot-redpen.mjs; write scripts into the scratchpad directory `C:/Users/asus/AppData/Local/Temp/claude/e74d84b441f26777/9b6ee208-6270-487b-8f41-fd8b563a9c05/scratchpad/`, not the repo.
+- Screenshots: headless Edge with Playwright like scripts/screenshot-redpen.mjs; write scripts into the scratchpad directory `<local path>`, not the repo.

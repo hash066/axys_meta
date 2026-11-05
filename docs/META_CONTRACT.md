@@ -232,6 +232,6 @@ Reuse `measureProductFidelity` on the hero shot to confirm the product pixels ar
 node worker: server/**, packages/meta/**, packages/inference/**, tests/** except film/scene tests. renderer worker: packages/renderers/**, tests/film-*.test.ts, tests/scene-*.test.ts.
 ui worker: apps/studio/**. lead: gateway/**, docs/**, scripts/**, README.md. Never read/print .env*. Never commit. Workers do not edit docs/ (report rows).
 Do not start/stop servers except the UI worker (rebuild + restart Studio on 4310 with `AXYS_DATA_DIR=var/demo AXYS_STARTER_CREDITS=200 npm start` after killing only the 4310 listener; gateway on 8766 stays up).
-Sample products (real Muse Image photos) for development: C:/Users/asus/AppData/Local/Temp/claude/e74d84b441f26777/9b6ee208-6270-487b-8f41-fd8b563a9c05/scratchpad/products/{mug,sneaker,cake}.png
-and older assets (cutout.png, plate.png) in C:/Users/asus/AppData/Local/Temp/claude/E--Winter-meta/6b9ee8c0-6f44-4bd9-a3ed-926cd83877c4/scratchpad/.
+Sample products (real Muse Image photos) for development: <local path>,sneaker,cake}.png
+and older assets (cutout.png, plate.png) in <local path>
 Test on at least TWO different product types so the look is not tuned to the mug. Be honest in the final report about what looks weaker than the reference (it is generative live-action; we are not).

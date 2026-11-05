@@ -6,7 +6,7 @@ animated stat counters, a "problem" stat grid, a recorded-session replay, a befo
 for the app itself.
 
 Reference screenshots (1440 px wide, scrolled in 900 px steps) are in
-`C:/Users/asus/AppData/Local/Temp/claude/e74d84b441f26777/9b6ee208-6270-487b-8f41-fd8b563a9c05/scratchpad/ss/` (`s00.png` hero ... `s09.png`, and `sheet.png`, a contact sheet). View them with the Read tool.
+`<local path>` (`s00.png` hero ... `s09.png`, and `sheet.png`, a contact sheet). View them with the Read tool.
 The user's own source for that site is `E:/Winter/siliconsmith-web/` (Next.js). Read it for ideas; do not copy its brand names or copy. This product is Axys.
 
 Theme tokens from that site: bg `#0b0c0b`, panel `#101210`, raised `#171a17`, sunken `#080908`, line `#222622`, line-2 `#323732`, ink `#eceee6`, ink-2 `#b4b9ad`, ink-3 `#8b9187`,
