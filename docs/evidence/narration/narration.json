@@ -9,9 +9,9 @@
   },
   {
     "id": "n2",
-    "text": "Models can state the wrong thing with confidence. So we measured our checks, and you can try the real ones yourself.",
+    "text": "Models can state the wrong thing with confidence. First time here? Play with this page to see why, then try our real checks.",
     "file": "docs/evidence/narration/n2.mp3",
-    "durationSec": 6.41,
+    "durationSec": 7.24,
     "credits": 58,
     "cached": false
   },
@@ -57,17 +57,17 @@
   },
   {
     "id": "n8",
-    "text": "Here is how the reel would look on Instagram. This is a preview, not a live post.",
+    "text": "The code can publish through Instagram's API. Here is how the reel looks there.",
     "file": "docs/evidence/narration/n8.mp3",
-    "durationSec": 4.41,
+    "durationSec": 4.69,
     "credits": 40,
     "cached": false
   },
   {
     "id": "n9",
-    "text": "These insights are sample data. The feedback loop may only quote real numbers, and it proposes one change that you approve.",
+    "text": "The code fetches real Instagram insights; these are sample numbers. The loop quotes only observed numbers and proposes one change.",
     "file": "docs/evidence/narration/n9.mp3",
-    "durationSec": 7.57,
+    "durationSec": 8.54,
     "credits": 62,
     "cached": false
   },
