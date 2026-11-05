@@ -166,6 +166,4 @@ SAM and Muse Image enrichment, voice intake, the product-aware film, narration a
 ## Honest status
 
 - **Live against Meta's API:** planning and preflight, SAM cutouts (including parts), Muse Image plates, Spark direction, voice transcription of the demo voice note, narration, Say it commands, Red Pen and Fix, grounded revision proposals.
-- **Staged in the demo video:** the WhatsApp conversation, the Instagram view and the insights numbers. The code for connecting an Instagram professional account, publishing a reel and reading insights exists, but has not been run against a real account, and nothing has been posted anywhere.
-- **Not verified:** microphone capture in the Studio and the WhatsApp bridge.
 - **Known limits:** SAM may miss unusual or very thin products; parts handling covers the first product of a campaign; single-node SQLite; reels are FFmpeg compositions of real product pixels because Meta's API has no video model; the free hosting tier is too small for reliable renders.
