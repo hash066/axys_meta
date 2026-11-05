@@ -26,7 +26,7 @@ const outTime = (scriptSeconds) => {
 };
 const inSpeedUp = (scriptSeconds) => speeds.some((s) => scriptSeconds * k > s.a && scriptSeconds * k < s.b);
 
-const gains = { voiceNote: 0.9, reelAudio: 0.85 };
+const gains = { voiceNote: 0.9, reelAudio: 3.2 };
 // Optional: CUE_OVERRIDES='{"n10": 172.3}' pins a cue to an output time (used after splicing a re-recorded scene).
 const overrides = JSON.parse(process.env.CUE_OVERRIDES ?? "{}");
 const inputs = [];
