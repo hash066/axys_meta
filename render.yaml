@@ -5,12 +5,8 @@ services:
     name: axys-for-meta
     runtime: docker
     dockerfilePath: ./Dockerfile
-    plan: standard            # 2 GB RAM; renders use FFmpeg and image processing. Persistent disks need a paid plan.
+    plan: free                # 512 MB, no disk: data resets on restart. Move to standard (2 GB + disk) for real use.
     healthCheckPath: /health
-    disk:
-      name: axys-data
-      mountPath: /data
-      sizeGB: 10
     envVars:
       - key: MODEL_API_KEY
         sync: false
