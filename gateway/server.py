@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hmac
 import os
 from pathlib import Path
 
@@ -33,6 +34,20 @@ _load_env()
 from . import meta_client as mc  # noqa: E402
 
 app = FastAPI(title="Muse gateway")
+
+
+@app.middleware("http")
+async def require_token(request: Request, call_next):
+    """When GATEWAY_TOKEN is set (a public deployment such as Modal), every call must carry it as a Bearer token.
+    Locally and inside the Docker compose network the variable is unset and nothing changes."""
+    expected = os.environ.get("GATEWAY_TOKEN", "")
+    if expected:
+        got = request.headers.get("authorization", "")
+        if not hmac.compare_digest(got.encode(), f"Bearer {expected}".encode()):
+            return JSONResponse({"error": "Unauthorized."}, status_code=401)
+    return await call_next(request)
+
+
 MAX_UPLOAD = 12 * 1024 * 1024
 MAX_PCM = 16_000 * 2 * 60
 

@@ -152,8 +152,12 @@ export class MuseGateway {
     const doFetch = this.options.fetch || fetch;
     let response: Response;
     try {
+      const token = process.env.MUSE_GATEWAY_TOKEN?.trim();
+      const headers = new Headers(init.headers);
+      if (token) headers.set("Authorization", `Bearer ${token}`);
       response = await doFetch(`${this.baseUrl}${route}`, {
         ...init,
+        headers,
         redirect: "error",
         signal: AbortSignal.timeout(timeoutMs),
       });

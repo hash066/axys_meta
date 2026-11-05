@@ -99,3 +99,22 @@ def test_speak_uses_cache_without_a_key(monkeypatch, tmp_path):
     (tmp_path / f"{digest}.mp3").write_bytes(b"ID3fake")
     r = client.post("/v1/speak", json={"text": "Cached   line."})
     assert r.status_code == 200 and r.json()["cached"] is True and r.json()["credits_charged"] == 0
+
+
+def test_token_required_when_configured(monkeypatch):
+    from fastapi.testclient import TestClient
+    from gateway.server import app
+
+    monkeypatch.setenv("GATEWAY_TOKEN", "s3cret")
+    client = TestClient(app)
+    assert client.get("/v1/health").status_code == 401
+    assert client.get("/v1/health", headers={"Authorization": "Bearer wrong"}).status_code == 401
+    assert client.get("/v1/health", headers={"Authorization": "Bearer s3cret"}).status_code == 200
+
+
+def test_open_without_token(monkeypatch):
+    from fastapi.testclient import TestClient
+    from gateway.server import app
+
+    monkeypatch.delenv("GATEWAY_TOKEN", raising=False)
+    assert TestClient(app).get("/v1/health").status_code == 200
